@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/async": "^2.0.38",
+    "@types/jasmine": "^2.5.43",
+    "@types/socket.io": "^1.4.28",
+    "@types/underscore": "^1.7.36",
+    "async": "^2.1.5",
+    "jasmine": "^2.5.3",
+    "socket.io": "^1.7.3",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "@types/log4js": "0.0.32",
+    "log4js": "^1.1.0"
+  }
+}
