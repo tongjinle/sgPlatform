@@ -6,11 +6,30 @@ export enum EChatType {
 	Personal
 };
 
-// 在线, 离线
+// 平台自身状态
+// 正常 暂停 关闭
 export enum EPlatformStatus {
+	Open,
+	Pause,
+	Close
+};
+
+// 用户的平台状态
+// 在线, 离线
+export enum EUserStatus {
 	Online,
 	Offline
 };
+
+// 房间状态
+// 预备中 进行中 暂停 结束
+export enum ERoomStatus{
+	Prepare,
+	Play,
+	Pause,
+	End
+};
+
 
 // 空闲,观战,游戏中
 export enum EGameStatus {
@@ -25,4 +44,11 @@ export enum EFlagColor {
 	Black,
 	Red,
 	Green
+};
+
+// 游戏类型
+export enum EGameName {
+	Sanguo,
+	Majiang,
+	ChineseChess
 }

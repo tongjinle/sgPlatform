@@ -15,7 +15,6 @@ export interface IReqLoginData {
 
 export interface IResLoginData {
     flag: boolean;
-    userName: string;
 };
 
 export interface INotifyLoginData {
@@ -33,6 +32,12 @@ export interface IResLogoutData {
 export interface INotifyLogoutData {
     userName: string;
 };
+
+// 断线
+export interface INotifyDisconnectData{
+    userName: string;
+};
+
 
 // 进入房间
 export interface IReqUserJoinRoomData {
