@@ -1,6 +1,7 @@
 import {
     EChatType,
     EPlatformStatus,
+    EUserStatus,
     EGameStatus,
     EFlagColor
 } from './enums';
@@ -106,7 +107,7 @@ export interface IGameInfo {
 // 用户信息
 export interface IUserInfo {
     userName: string;
-    platformStatus: EPlatformStatus;
+    userStatus:EUserStatus,
     gameStatus: EGameStatus;
     roomId: number;
     gameInfo: IGameInfo;
@@ -122,10 +123,3 @@ export interface IResOnlineUserList {
     list: IUserInfo[];
 };
 
-// 用户列表
-export interface IResUserInfo {
-    userName: string
-};
-
-export interface IResUserList extends Array<IResUserInfo> {
-};

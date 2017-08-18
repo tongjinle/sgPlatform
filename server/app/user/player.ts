@@ -1,0 +1,17 @@
+import { EGameStatus } from '../../struct/enums';
+import { Game } from '../game';
+
+export class Player {
+	userName: string;
+	gameStatus: EGameStatus;
+	// 上一次动作时间,包括所有动作
+	lastActionTs: number;
+	// 断线时间戳
+	offlineTs: number;
+	// 断线次数
+	offlineCount: number;
+	// 是否是我的回合
+	isTurn: boolean;
+	// 游戏实例
+	game: Game;
+}

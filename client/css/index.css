@@ -1,0 +1,59 @@
+#login{
+
+}
+
+#pathnode{
+	display: flex;
+    justify-content: space-around;
+}
+#pathnode .subPathnodeList{
+	
+width: 280px;
+    display: flex;
+    flex-direction: column;
+}
+#pathnode .subPathnodeList .subPathnode{
+	text-align: center;
+}
+
+#chatbox{
+    flex-grow: 1;
+}
+
+#chatbox .messageList{
+	overflow-y: scroll;
+	height: 640px;
+}
+#chatbox .messageList .message{
+	width: 100%;
+	float: left;
+}
+#chatbox .messageList .message.isSelf{
+	width: auto;
+	float: right;
+	clear: both;
+}
+#chatbox .messageList .message .username{}
+#chatbox .messageList .message .text{}
+#chatbox .messageList .message .text.private{
+	color:steelblue;
+}
+#chatbox .messageList .message .timestamp{}
+#chatbox .chatbar{}
+#chatbox .chatbar .inputbox{}
+#chatbox .chatbar .sendMessage{}
+
+
+#pathnode .userList{
+	display: flex;
+    width: 200px;
+    flex-direction: column;
+}
+#pathnode .userList .username{
+	text-align: center;
+}
+#pathnode .userList .username.privateReceiver{
+	background-color: black;
+	color: white;
+	
+}

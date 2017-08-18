@@ -1,0 +1,29 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/async": "^2.0.38",
+    "@types/jasmine": "^2.5.43",
+    "@types/jquery": "^2.0.45",
+    "@types/requirejs": "^2.1.29",
+    "@types/socket.io": "^1.4.28",
+    "@types/socket.io-client": "^1.4.29",
+    "@types/underscore": "^1.7.36",
+    "async": "^2.1.5",
+    "browser-sync": "^2.18.9",
+    "gulp": "^3.9.1",
+    "jasmine": "^2.5.3",
+    "jquery": "^3.2.1",
+    "requirejs": "^2.3.3",
+    "socket.io": "^1.7.3",
+    "underscore": "^1.8.3"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
