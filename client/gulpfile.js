@@ -7,7 +7,7 @@ var browserSync = require('browser-sync').create();
 gulp.task('serve', function() {
 	browserSync.init({
 		server: "./",
-		index: "./html/index.html"
+		index: "./html/test.html"
 	});
 
 	gulp.watch(["js/*.js", "html/*.html", "css/*.css"]).on('change', () => {

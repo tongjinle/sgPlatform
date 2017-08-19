@@ -2,6 +2,7 @@ import { EPlatformStatus } from '../struct/enums';
 import { User } from './user';
 import { Room } from './room';
 import * as SocketIO from 'socket.io';
+import loger from './loger';
 
 
 export class Platform {
@@ -14,7 +15,7 @@ export class Platform {
 		this.userList = [];
 		this.roomList = [];
 		this.io = io;
-		
+
 		this.status = EPlatformStatus.Open;
 
 		this.listen();
@@ -23,8 +24,9 @@ export class Platform {
 	private listen(): void {
 		let io = this.io;
 		io.on('connect', so => {
-			let us = new User(so);
+			let us = new User(so, this);
 			this.userList.push(us);
+			loger.info(`connect::${so.id}`);
 		});
 	}
 };

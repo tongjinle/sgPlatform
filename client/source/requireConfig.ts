@@ -9,4 +9,4 @@ require.config({
 });
 
 
-require(["index"]);
+require(["test"]);

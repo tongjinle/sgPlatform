@@ -17,15 +17,18 @@ export class User {
 	private platform: Platform;
 
 
-	constructor(so: SocketIO.Socket) {
-		this.socket = so;
+	constructor(socket: SocketIO.Socket, platform: Platform) {
+		this.socket = socket;
+		this.platform = platform;
 		this.userName = undefined;
 		this.roomList = [];
 		this.status = EUserStatus.Offline;
+
+		this.listen();
 	}
 
 
-	private Listen(): void {
+	private listen(): void {
 		let so = this.socket;
 		let pl = this.platform;
 		let io = pl.io;
@@ -41,9 +44,9 @@ export class User {
 
 				let notiData: Protocol.INotifyLoginData = { userName };
 				io.emit('notiLogin', notiData);
-
-				loger.info(`login successful: ${userName}`);
 			}
+
+			loger.info(`login::${userName}::${flag}`);
 		});
 
 
