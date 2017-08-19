@@ -60,16 +60,15 @@ export class User {
 
 				let notiData: Protocol.INotifyLogoutData = { userName: this.userName };
 				io.emit('notiLogout', notiData);
-
-				loger.info(`logout successful: ${this.userName}`);
-
 			}
+			loger.info(`logout::${this.userName}::${flag}`);
+
 		});
 
 
 		// 断线
-		so.on('disconect', () => {
-			if (this.status == EUserStatus.Online && pl.userList.some(us => us.socket == so)) {
+		so.on('disconnect', () => {
+			if (this.status == EUserStatus.Online) {
 				let notiData: Protocol.INotifyDisconnectData = { userName: this.userName };
 				io.emit('notiDisconnect', notiData);
 
@@ -88,6 +87,12 @@ export class User {
 			if (flag) {
 				let list = API.onlineUserList(pl).map(us => {
 					let ret: Protocol.IUserInfo;
+					ret = {
+						userName: us.userName,
+						userStatus: us.status,
+						roomIdList: us.roomList.map(ro => ro.id),
+						gameInfo: undefined
+					};
 					return ret;
 				});
 				resData = { flag: true, list };

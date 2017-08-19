@@ -45,8 +45,8 @@ export namespace API {
 	// 用户登录
 	export function loginUser(socket: SocketIO.Socket, platform: Platform, userName: string, password: string): boolean {
 		let ret: boolean;
-		let isExist = platform.userList.some(us => us.userName == userName);
-		if (isExist) { return false; }
+		// let isExist = platform.userList.some(us => us.userName == userName);
+		// if (isExist) { return false; }
 
 		// mock
 		// todo

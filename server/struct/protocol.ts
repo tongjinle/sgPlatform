@@ -107,9 +107,8 @@ export interface IGameInfo {
 // 用户信息
 export interface IUserInfo {
     userName: string;
-    userStatus:EUserStatus,
-    gameStatus: EGameStatus;
-    roomId: number;
+    userStatus:EUserStatus;
+    roomIdList: number[];
     gameInfo: IGameInfo;
 };
 
