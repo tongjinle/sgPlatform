@@ -74,7 +74,7 @@ export interface IReqChat {
     message: string;
     type: EChatType
     // 在某个房间的聊天
-    roomId?: number;
+    roomId?: string;
     // to是对某人的私人聊天
     to?: string;
 };
