@@ -1,7 +1,7 @@
 // 聊天类型
 // 世界聊天,房间聊天,私人聊天
 export enum EChatType {
-	World,
+	Platform,
 	Room,
 	Personal
 };
@@ -51,4 +51,5 @@ export enum EGameName {
 	Sanguo,
 	Majiang,
 	ChineseChess
-}
+};
+

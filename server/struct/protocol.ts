@@ -73,6 +73,8 @@ export interface INotifyLeaveRoomData {
 export interface IReqChat {
     message: string;
     type: EChatType
+    // 在某个房间的聊天
+    roomId?: number;
     // to是对某人的私人聊天
     to?: string;
 };
@@ -84,7 +86,6 @@ export interface IResChat {
 export interface INotifyChat {
     from: string;
     type: EChatType;
-    to?: string;
     message: string;
     timestamp: number;
 };

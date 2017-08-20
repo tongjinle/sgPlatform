@@ -1,4 +1,4 @@
-import { EPlatformStatus, EUserStatus, EGameStatus } from '../struct/enums';
+import { EPlatformStatus, EUserStatus, EGameStatus, EChatType } from '../struct/enums';
 import { Platform } from './platform';
 import { Room } from './Room';
 import { Game } from './game';
@@ -6,6 +6,7 @@ import * as SocketIO from 'socket.io';
 import * as Protocol from '../struct/protocol';
 import { API } from './api';
 import loger from './loger';
+import * as _ from 'underscore';
 
 
 export class User {
@@ -104,6 +105,34 @@ export class User {
 				so.emit('resOnlineUserList', resData);
 			});
 
+
+			// 聊天
+			so.on('reqChat', (data: Protocol.IReqChat) => {
+				let { message, type, to,roomId } = data;
+				let ts = new Date().getTime();
+				let notiData: Protocol.INotifyChat = {
+					from: this.userName,
+					type,
+					message,
+					timestamp: ts
+				};
+				if (EChatType.Platform == type) {
+					pl.broadcast('notiChat', notiData);
+				} else if (EChatType.Room == type) {
+					// 判断是不是在这个房间里
+					io.to(roomId).emit('notiChat', notiData);
+				}
+				else if (EChatType.Personal == type) {
+					let soId: string;
+					let us = _.find(pl.userList, us => us.userName == to);
+					if (us) {
+						soId = us.socket.id;
+						let targetSo = io.sockets.sockets[soId];
+						targetSo.emit('notiChat', notiData);
+					}
+				}
+			});
+
 		}
 	}
 
@@ -147,6 +176,14 @@ export class User {
 	}
 
 
-	private reconnect(): void { }
+
+
+
+
+
+
+
+	// 重连
+	reconnect(): void { }
 }
 
