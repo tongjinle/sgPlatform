@@ -11,14 +11,21 @@ export class Platform {
 	status: EPlatformStatus;
 	io: SocketIO.Server;
 
+	// 等待被重连的socket
+	holdList: { userName: string, ts: number }[];
+	// 重连时间
+	private holdDuration: number = 5 * 60 * 1000;
+
 	constructor(io: SocketIO.Server) {
 		this.userList = [];
 		this.roomList = [];
 		this.io = io;
+		this.holdList = [];
 
 		this.status = EPlatformStatus.Open;
 
 		this.listen();
+		this.loopHoldList();
 	}
 
 	private listen(): void {
@@ -32,5 +39,18 @@ export class Platform {
 
 	broadcast(eventName: string, ...data: any[]): void {
 		this.io.to('platform').emit(eventName, ...data);
+	}
+
+	private loopHoldList(): void {
+		setInterval(() => {
+			let ts = new Date().getTime();
+			for (var i = 0; i < this.holdList.length; i++) {
+				let ho = this.holdList[i];
+				if (ts - ho.ts >= this.holdDuration) {
+					this.holdList.splice(i, 1);
+					loger.info(`remove hold::${ho.userName}`);
+				}
+			}
+		}, 1000);
 	}
 };

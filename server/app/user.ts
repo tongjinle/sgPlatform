@@ -48,6 +48,13 @@ export class User {
 
 					let notiData: Protocol.INotifyLoginData = { userName };
 					pl.broadcast('notiLogin', notiData);
+
+					// 查看是否是重连
+					if (pl.holdList.some(ho => ho.userName == userName)) {
+						pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
+						loger.info(`reconnect::${userName}`);
+						this.reconnect();
+					}
 				}
 
 				loger.info(`login::${userName}::${flag}`);
@@ -131,10 +138,15 @@ export class User {
 				this.status = EUserStatus.Offline;
 
 				loger.info(`disconnect : ${this.userName}`);
+
+				pl.holdList.push({ userName: this.userName, ts: new Date().getTime() });
 			}
 		});
 
 
 	}
+
+
+	private reconnect(): void { }
 }
 
