@@ -29,4 +29,8 @@ export class Platform {
 			loger.info(`connect::${so.id}`);
 		});
 	}
+
+	broadcast(eventName: string, ...data: any[]): void {
+		this.io.to('platform').emit(eventName, ...data);
+	}
 };

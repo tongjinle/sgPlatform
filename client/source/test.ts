@@ -38,7 +38,13 @@ let watcher = soList['watcher'];
 let watchedList: { userName: string, status: boolean }[] = [];
 watcher.on('notiLogin', data => {
 	let { userName } = data;
-	watchedList.push({ userName, status: true });
+	let us = _.find(watchedList, us => us.userName == userName);
+	if (us) {
+		us.status = true;
+	} else {
+		watchedList.push({ userName, status: true });
+
+	}
 });
 
 watcher.on('notiLogout', data => {
@@ -55,38 +61,48 @@ watcher.on('notiDisconnect', data => {
 	});
 });
 
+watcher.on('resOnlineUserList', data => {
+	console.log(JSON.stringify(data, null, 4));
+});
+
 
 
 async.series([
-	(cb) => {
+	cb => {
 		watcher.emit('reqLogin', { userName: 'watcher', password: 'falcon' });
-		cb();
+		setTimeout(cb, 100);
 	},
-	(cb) => {
-		setTimeout(cb, 1000);
-	},
-	(cb) => {
+	cb => {
 		userNameList.slice(1).forEach(n => {
 			soList[n].emit('reqLogin', { userName: n, password: 'falcon' });
 		});
-		cb();
-	},
-	(cb) => {
-		setTimeout(cb, 2000);
-	},
-	(cb) => {
-		soList['b'].disconnect();
-		cb();
-	},
-	(cb) => {
-		soList['c'].emit('reqLogout');
-		cb();
-	}, (cb) => {
 		setTimeout(cb, 200);
 	},
-], () => {
-	console.log(watchedList);
-});
+	cb => {
+		soList['b'].disconnect();
+		soList['c'].emit('reqLogout');
+		setTimeout(cb, 200);
+	},
+	cb => {
+		console.log(JSON.stringify(watchedList,null,4));
+		cb();
+	},
+	cb => {
+		let usName = 'b';
+		soList[usName] = io("http://localhost:1216", opts);
+		soList[usName].emit('reqLogin', { userName: usName, password: 'falcon' });
+		setTimeout(cb, 2000);
+
+	},
+	cb => {
+		console.log(JSON.stringify(watchedList,null,4));
+		cb();
+	},
+	cb=>{
+		watcher.emit('reqOnlineUserList');
+		cb();
+	}
+]);
 
 
 
