@@ -3,8 +3,11 @@ import { Platform } from './platform';
 import { Room } from './Room';
 import { Game } from './game';
 import { User } from './user';
+import { Player } from './user/player';
+import { Watcher } from './user/watcher';
+
 import * as SocketIO from 'socket.io';
-import { EPlatformStatus, EUserStatus, EGameStatus } from '../struct/enums';
+import { EPlatformStatus, EUserStatus, EGameStatus, EChatType, ERoomStatus } from '../struct/enums';
 import loger from './loger';
 import * as _ from 'underscore';
 
@@ -41,7 +44,6 @@ export namespace API {
 		return ret;
 	};
 
-
 	// 用户登录
 	export function loginUser(socket: SocketIO.Socket, platform: Platform, userName: string, password: string): boolean {
 		let ret: boolean;
@@ -50,6 +52,11 @@ export namespace API {
 
 		// mock
 		// todo
+
+		// 防止重复userName
+		// 防止断线的问题
+		platform.userList = platform.userList.filter(us => us.userName != userName);
+
 		let us = _.find(platform.userList, us => us.socket == socket);
 		us.userName = userName;
 		us.status = EUserStatus.Online;
@@ -76,5 +83,36 @@ export namespace API {
 		return ret;
 	}
 
+	// 聊天
+	export function chat(message: string, chatType: EChatType, opts?: { roomId?: string, to?: string }): boolean {
+		let ret: boolean;
+		return ret;
+	}
+
+	// 匹配游戏
+	// 要检测玩家能否再开新游戏房间
+
+
+
+	// 创建房间
+	export function createRoom(platform: Platform, playerList: Player[]): boolean {
+		let ret: boolean;
+		let ro = new Room();
+
+		ro.id = _.uniqueId().toString();
+		ro.playerList = ro.playerList.concat(playerList);
+		ro.status = ERoomStatus.Prepare;
+
+		ro.maxPlayerCount = 2;
+		ro.maxWatcherCount = 10;
+		ro.canWatch = true;
+		ro.canPlay = true;
+
+		return ret;
+	}
+
+	// 加入房间
+
+	// 销毁房间
 
 }

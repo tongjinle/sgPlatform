@@ -108,29 +108,54 @@ export class User {
 
 			// 聊天
 			so.on('reqChat', (data: Protocol.IReqChat) => {
-				let { message, type, to,roomId } = data;
+				let { message, type, to, roomId } = data;
 				let ts = new Date().getTime();
+				let flag: boolean = false;
+				let from = this.userName;
 				let notiData: Protocol.INotifyChat = {
-					from: this.userName,
+					from,
 					type,
 					message,
 					timestamp: ts
 				};
+				let resData: Protocol.IResChat;
 				if (EChatType.Platform == type) {
+					flag = true;
 					pl.broadcast('notiChat', notiData);
-				} else if (EChatType.Room == type) {
+					loger.info(`platform chat::${from}::${message}`);
+				}
+				else if (EChatType.Room == type) {
 					// 判断是不是在这个房间里
-					io.to(roomId).emit('notiChat', notiData);
+					let usListInRoom = so.rooms[roomId];
+					flag = !!usListInRoom;
+					if (flag) {
+						io.to(roomId).emit('notiChat', notiData);
+						loger.info(`room chat::${roomId}::${from}::${message}`);
+					}
 				}
 				else if (EChatType.Personal == type) {
 					let soId: string;
 					let us = _.find(pl.userList, us => us.userName == to);
-					if (us) {
+					flag = !!us;
+					if (flag) {
 						soId = us.socket.id;
 						let targetSo = io.sockets.sockets[soId];
-						targetSo.emit('notiChat', notiData);
+						if(!targetSo){
+							loger.debug(us.userName);
+							loger.debug(us.socket.id);
+							loger.debug(Object.keys(io.sockets.sockets).join('\n'));
+							loger.debug('...');
+							loger.debug(pl.userList.map(us => us.userName).join('\n'));
+						}else{
+							targetSo.emit('notiChat', notiData);
+						}
+
+						//聊天发送者必然应该被notify
+						so.emit('notiChat', notiData);
+						loger.info(`personal chat::${from} => ${to}::${message}`);
 					}
 				}
+				so.emit('resChat', resData);
 			});
 
 		}
@@ -144,6 +169,26 @@ export class User {
 		this.status = EUserStatus.Offline;
 
 		this.listen();
+	}
+
+	// 加入房间
+	joinRoom(roomId: string) {
+
+	}
+
+	// 离开房间
+	leaveRoom(roomId: string) {
+
+	}
+
+	// 观战
+	watchRoom(roomId: string) {
+
+	}
+
+	// 离开观战
+	unwatchRoom(roomId: string) {
+
 	}
 
 

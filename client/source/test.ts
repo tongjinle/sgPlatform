@@ -4,6 +4,11 @@ import * as async from 'async';
 
 let watcher;
 let watchedList: { userName: string, status: boolean }[] = [];
+let watchedChatList: {
+	from: string;
+	message: string;
+	timestamp: number;
+}[] = [];
 let soList: { [userName: string]: SocketIOClient.Socket } = {};
 
 let createSocket = () => {
@@ -52,6 +57,11 @@ let createWatcher = () => {
 	watcher.on('resOnlineUserList', data => {
 		console.log(JSON.stringify(data, null, 4));
 	});
+
+	watcher.on('notiChat', data => {
+		let { from, timestamp, message } = data;
+		watchedChatList.push(data);
+	});
 };
 
 
@@ -64,6 +74,21 @@ let logout = (socket: SocketIOClient.Socket) => {
 	socket.emit('reqLogout');
 };
 
+let chat = (socket: SocketIOClient.Socket, message: string, to: string | 'world' | 'room') => {
+	let data: any = {
+		message
+	};
+	if ('world' == to) {
+		// do nothing
+		// default
+	} else if ('room' == to) {
+
+	} else {
+		data.to = to;
+	}
+	socket.emit('reqChat', data);
+}
+
 let clear = (cb) => {
 	watchedList = [];
 	_.each(soList, so => {
@@ -74,6 +99,8 @@ let clear = (cb) => {
 };
 
 let testList = [];
+
+// 测试登陆
 testList.push((cb) => {
 	let userNameList = ['a', 'b', 'c'];
 
@@ -120,15 +147,67 @@ testList.push((cb) => {
 			cb();
 		}
 	], clear.bind(null, cb));
+});
 
+// 测试聊天
+// a,b,c登陆
+// a在世界频道说了hello
+// watcher听到了这句话,b,c也听到了hello这句话
+// a对b私聊了一句world
+// b听到,而c听不到
+// 注意,a必然可以听到,因为a是发出者
+testList.push((cb) => {
+	let userNameList = ['a', 'b', 'c'];
+	let chatList: { [userName: string]: { from: string, message: string, timestamp: number }[] } = {};
+	async.series([
+		cb => {
+			userNameList.forEach(usName => {
+				let so = createSocket();
+				soList[usName] = so;
 
+				so.on('notiChat', data => {
+					let list = chatList[usName] = chatList[usName] || []
+					list.push(data);
+				});
+
+				login(so, usName);
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			soList['a'].emit('reqChat', { message: 'hello', type: 0 });
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let bHearHello: boolean = chatList['b'].some(chat => chat.from == 'a' && chat.message == 'hello');
+			let cHearHello: boolean = chatList['c'].some(chat => chat.from == 'a' && chat.message == 'hello');
+			console.assert(bHearHello && cHearHello);
+			cb();
+		},
+		cb => {
+			soList['a'].emit('reqChat', { message: 'world', type: 2, to: 'b' });
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let aHearWorld: boolean = chatList['a'].some(chat => chat.from == 'a' && chat.message == 'world');
+			let bHearWorld: boolean = chatList['b'].some(chat => chat.from == 'a' && chat.message == 'world');
+			let cHearWorld: boolean = chatList['c'].some(chat => chat.from == 'a' && chat.message == 'world');
+			console.assert(aHearWorld && bHearWorld && !cHearWorld);
+			cb();
+		},
+		cb => {
+			console.log(JSON.stringify(chatList, null, 4));
+			chatList = null;
+			cb();
+		}
+	], clear.bind(null, cb));
 
 });
 
 createWatcher();
 setTimeout(() => {
 
-	async.eachSeries(testList, (te, cb) => te(cb), () => {
+	async.eachSeries(testList/*.slice(1)*/, (te, cb) => te(cb), () => {
 		console.log('test complete');
 	});
 

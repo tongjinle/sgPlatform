@@ -109,7 +109,7 @@ export interface IGameInfo {
 export interface IUserInfo {
     userName: string;
     userStatus:EUserStatus;
-    roomIdList: number[];
+    roomIdList: string[];
     gameInfo: IGameInfo;
 };
 
