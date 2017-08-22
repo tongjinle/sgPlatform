@@ -34,7 +34,7 @@ export class User {
 			so.leaveAll();
 
 			// 反监听
-			['reqLogout', 'reqOnlineUserList'].forEach(eventName => {
+			['reqLogout', 'reqOnlineUserList','reqChat'].forEach(eventName => {
 				so.removeAllListeners(eventName);
 			});
 
@@ -157,6 +157,10 @@ export class User {
 				}
 				so.emit('resChat', resData);
 			});
+
+			// 匹配游戏
+
+			// 退出房间
 
 		}
 	}
