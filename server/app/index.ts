@@ -1,4 +1,3 @@
-import { API } from './api';
 import { Platform } from './platform';
 
-API.createPlatform();
+let pl = Platform.getInstance();

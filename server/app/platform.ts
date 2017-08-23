@@ -1,3 +1,4 @@
+import * as Http from 'http';
 import { EPlatformStatus, ERoomStatus, EGameName } from '../struct/enums';
 import { User } from './user';
 import { Player } from './user/player';
@@ -22,7 +23,7 @@ export class Platform {
 	// 重连时间
 	private holdDuration: number = 5 * 60 * 1000;
 
-	constructor(io: SocketIO.Server) {
+	private constructor(io: SocketIO.Server) {
 		this.userList = [];
 		this.roomList = [];
 		this.io = io;
@@ -77,5 +78,26 @@ export class Platform {
 		});
 	}
 
+	private static plSingle: Platform;
+	static getInstance(): Platform {
+		if (Platform.plSingle) { return Platform.plSingle; }
+
+		const PORT = 1216;
+		let ret: Platform;
+		let serv = Http.createServer();
+		let io = SocketIO(serv);
+		ret = new Platform(io);
+
+
+		serv.listen(PORT, () => {
+			let addrInfo = serv.address();
+			loger.info(`server address : ${addrInfo.address}`);
+			loger.info(`server port : ${addrInfo.port}`);
+			loger.info(`start server at ${new Date().toTimeString()}`);
+		});
+
+		Platform.plSingle = ret;
+		return ret;
+	};
 
 };

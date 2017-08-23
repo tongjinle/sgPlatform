@@ -4,7 +4,6 @@ import { Room } from './Room';
 import { Game } from './game';
 import * as SocketIO from 'socket.io';
 import * as Protocol from '../struct/protocol';
-import { API } from './api';
 import loger from './loger';
 import * as _ from 'underscore';
 
