@@ -14,4 +14,14 @@ export class Player {
 	isTurn: boolean;
 	// 游戏实例
 	game: Game;
+
+
+	constructor(userName:string){
+		this.userName = userName;
+		this.offlineTs = -1;
+		this.offlineCount = 0;
+		this.lastActionTs = -1;
+		this.gameStatus = EGameStatus.Free;
+		this.isTurn = false;
+	}
 }

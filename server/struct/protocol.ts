@@ -3,7 +3,8 @@ import {
     EPlatformStatus,
     EUserStatus,
     EGameStatus,
-    EFlagColor
+    EFlagColor,
+    EGameName
 } from './enums';
 
 // ##### to client event #####
@@ -35,7 +36,7 @@ export interface INotifyLogoutData {
 };
 
 // 断线
-export interface INotifyDisconnectData{
+export interface INotifyDisconnectData {
     userName: string;
 };
 
@@ -108,7 +109,7 @@ export interface IGameInfo {
 // 用户信息
 export interface IUserInfo {
     userName: string;
-    userStatus:EUserStatus;
+    userStatus: EUserStatus;
     roomIdList: string[];
     gameInfo: IGameInfo;
 };
@@ -123,3 +124,22 @@ export interface IResOnlineUserList {
     list: IUserInfo[];
 };
 
+
+export interface IGameRule {
+    playerCount: number;
+};
+
+// 匹配游戏
+export interface IReqMatchGame {
+    name: EGameName;
+    extData: {};
+};
+
+export interface IResMatchGame {
+    flag: boolean;
+};
+
+export interface INotifyMatchGame {
+    roomId: string;
+    playerNameList: string[]
+};

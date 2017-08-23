@@ -94,22 +94,6 @@ export namespace API {
 
 
 
-	// 创建房间
-	export function createRoom(platform: Platform, playerList: Player[]): boolean {
-		let ret: boolean;
-		let ro = new Room();
-
-		ro.id = _.uniqueId().toString();
-		ro.playerList = ro.playerList.concat(playerList);
-		ro.status = ERoomStatus.Prepare;
-
-		ro.maxPlayerCount = 2;
-		ro.maxWatcherCount = 10;
-		ro.canWatch = true;
-		ro.canPlay = true;
-
-		return ret;
-	}
 
 	// 加入房间
 

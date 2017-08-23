@@ -52,7 +52,8 @@ export class User {
 
 
 			});
-		} else if (EUserStatus.Online == v) {
+		}
+		else if (EUserStatus.Online == v) {
 			// 反监听
 			[
 				'reqLogin',
@@ -108,6 +109,18 @@ export class User {
 			});
 
 			// 匹配游戏
+			so.on('reqMatchGame', (data: Protocol.IReqMatchGame) => {
+				let { name } = data;
+				// 登记自己在匹配
+				let list = pl.matchingList[name] = pl.matchingList[name] || [];
+				let flag: boolean;
+				flag = !list.some(usName => usName == this.userName)
+				if (flag) {
+					list.push(this.userName);
+					let resData: Protocol.IResMatchGame = { flag };
+					so.emit('resMatchGame', resData);
+				}
+			});
 
 			// 退出房间
 

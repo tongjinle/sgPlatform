@@ -1,8 +1,11 @@
-import { EPlatformStatus } from '../struct/enums';
+import { EPlatformStatus, ERoomStatus, EGameName } from '../struct/enums';
 import { User } from './user';
+import { Player } from './user/player';
+import { Watcher } from './user/watcher';
 import { Room } from './room';
 import * as SocketIO from 'socket.io';
 import loger from './loger';
+import * as _ from 'underscore';
 
 
 export class Platform {
@@ -11,6 +14,9 @@ export class Platform {
 	status: EPlatformStatus;
 	io: SocketIO.Server;
 
+
+	// 在等待匹配的用户列表
+	matchingList: { [gameName: string]: string[] };
 	// 等待被重连的socket
 	holdList: { userName: string, ts: number }[];
 	// 重连时间
@@ -21,11 +27,14 @@ export class Platform {
 		this.roomList = [];
 		this.io = io;
 		this.holdList = [];
+		this.matchingList = {};
 
 		this.status = EPlatformStatus.Open;
 
 		this.listen();
 		this.loopHoldList();
+		this.loopMatchGame();
+
 	}
 
 	private listen(): void {
@@ -53,4 +62,20 @@ export class Platform {
 			}
 		}, 1000);
 	}
+
+
+	private loopMatchGame(): void {
+		setInterval(() => {
+			let ts = Date.now();
+			_.each(this.matchingList, (list, name) => {
+				while (list.length >= 2) {
+					let matchedList = list.splice(0, 2);
+					let ro = new Room(EGameName[name], matchedList);
+					this.roomList.push(ro);
+				}
+			});
+		});
+	}
+
+
 };

@@ -15,4 +15,24 @@ export class Room {
 	canWatch: boolean;
 	canPlay: boolean;
 	status: ERoomStatus;
+
+
+	constructor(gameName: EGameName, playerNameList: string[]) {
+		// create game;
+		this.createGame(gameName);
+		// push player;
+		playerNameList.forEach(plName => {
+			let pler = new Player(plName);
+			this.playerList.push(pler);
+			this.status = ERoomStatus.Play;
+		});
+	}
+
+	// 工厂
+	private createGame(gameName: EGameName): void {
+		if(EGameName.Sanguo==gameName){
+
+		}
+	}
+
 }
