@@ -30,74 +30,62 @@ export class User {
 		let io = pl.io;
 
 		if (EUserStatus.Offline == v) {
-			// 离开所有房间
-			so.leaveAll();
-
 			// 反监听
-			['reqLogout', 'reqOnlineUserList','reqChat'].forEach(eventName => {
+			[
+				'reqLogout',
+				'reqOnlineUserList',
+				'reqChat',
+
+				'reqJoinRoom',
+				'reqLeaveRoom',
+				'reqWatchRoom',
+				'reqUnWatchRoom'
+			].forEach(eventName => {
 				so.removeAllListeners(eventName);
 			});
 
-			// 登陆
+			// 监听
 			so.on('reqLogin', (data: Protocol.IReqLoginData) => {
 				let { userName, password } = data;
-				let flag = API.loginUser(so, pl, userName, password);
-				let resData: Protocol.IResLoginData = { flag };
-				so.emit('resLogin', resData);
-				if (flag) {
-					this.status = EUserStatus.Online;
+				this.login(userName, password);
 
-					let notiData: Protocol.INotifyLoginData = { userName };
-					pl.broadcast('notiLogin', notiData);
 
-					// 查看是否是重连
-					if (pl.holdList.some(ho => ho.userName == userName)) {
-						pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
-						loger.info(`reconnect::${userName}`);
-						this.reconnect();
-					}
-				}
 
-				loger.info(`login::${userName}::${flag}`);
 			});
 		} else if (EUserStatus.Online == v) {
-			// 进入platform房间
-			so.join('platform');
-
 			// 反监听
-			so.removeAllListeners('reqLogin');
+			[
+				'reqLogin',
+				'reqOnlineUserList',
+				'reqChat'
+			].forEach(eventName => {
+				so.removeAllListeners(eventName);
+			});
 
 			// 登出
 			so.on('reqLogout', (data: Protocol.IReqLogoutData) => {
-				let flag: boolean = API.logoutUser(so, pl, this.userName);
-				let resData: Protocol.IResLogoutData = { flag };
-				so.emit('resLogout', resData);
-				if (flag) {
-					let notiData: Protocol.INotifyLogoutData = { userName: this.userName };
-					pl.broadcast('notiLogout', notiData);
-					so.disconnect();
-				}
-				loger.info(`logout::${this.userName}::${flag}`);
-
+				this.logout();
 			});
 
-			// 获取当前在线用户列表
+			// 获取用户
 			so.on('reqOnlineUserList', (data: Protocol.IReqOnlineUserList) => {
 				let flag: boolean = false;
 				let resData: Protocol.IResOnlineUserList;
-				if (EPlatformStatus.Open == pl.status) { flag = true; }
+				flag = true;
 
 				if (flag) {
-					let list = API.onlineUserList(pl).map(us => {
-						let ret: Protocol.IUserInfo;
-						ret = {
-							userName: us.userName,
-							userStatus: us.status,
-							roomIdList: us.roomList.map(ro => ro.id),
-							gameInfo: undefined
-						};
-						return ret;
-					});
+					let list = pl.userList
+						.filter(us => us.status == EUserStatus.Online)
+						.map(us => {
+							let ret: Protocol.IUserInfo;
+							ret = {
+								userName: us.userName,
+								userStatus: us.status,
+								roomIdList: us.roomList.map(ro => ro.id),
+								gameInfo: undefined
+							};
+							return ret;
+						});
 					resData = { flag: true, list };
 				} else {
 					resData = { flag: false, list: undefined };
@@ -105,57 +93,18 @@ export class User {
 				so.emit('resOnlineUserList', resData);
 			});
 
-
 			// 聊天
 			so.on('reqChat', (data: Protocol.IReqChat) => {
 				let { message, type, to, roomId } = data;
-				let ts = new Date().getTime();
-				let flag: boolean = false;
-				let from = this.userName;
-				let notiData: Protocol.INotifyChat = {
-					from,
-					type,
-					message,
-					timestamp: ts
-				};
-				let resData: Protocol.IResChat;
 				if (EChatType.Platform == type) {
-					flag = true;
-					pl.broadcast('notiChat', notiData);
-					loger.info(`platform chat::${from}::${message}`);
+					this.chatToWorld(message);
 				}
 				else if (EChatType.Room == type) {
-					// 判断是不是在这个房间里
-					let usListInRoom = so.rooms[roomId];
-					flag = !!usListInRoom;
-					if (flag) {
-						io.to(roomId).emit('notiChat', notiData);
-						loger.info(`room chat::${roomId}::${from}::${message}`);
-					}
+					this.chatToRoom(message, roomId);
 				}
 				else if (EChatType.Personal == type) {
-					let soId: string;
-					let us = _.find(pl.userList, us => us.userName == to);
-					flag = !!us;
-					if (flag) {
-						soId = us.socket.id;
-						let targetSo = io.sockets.sockets[soId];
-						if(!targetSo){
-							loger.debug(us.userName);
-							loger.debug(us.socket.id);
-							loger.debug(Object.keys(io.sockets.sockets).join('\n'));
-							loger.debug('...');
-							loger.debug(pl.userList.map(us => us.userName).join('\n'));
-						}else{
-							targetSo.emit('notiChat', notiData);
-						}
-
-						//聊天发送者必然应该被notify
-						so.emit('notiChat', notiData);
-						loger.info(`personal chat::${from} => ${to}::${message}`);
-					}
+					this.chatToPerson(message, to);
 				}
-				so.emit('resChat', resData);
 			});
 
 			// 匹配游戏
@@ -175,15 +124,158 @@ export class User {
 		this.listen();
 	}
 
+
+	login(userName: string, password: string): void {
+		let so = this.socket;
+		let pl = this.platform;
+		let io = pl.io;
+
+		// 数据库密码
+		let flag = true;
+		this.userName = userName;
+		this.joinPlatform();
+		this.status = EUserStatus.Online;
+
+
+		let resData: Protocol.IResLoginData = { flag };
+		so.emit('resLogin', resData);
+		if (flag) {
+			this.status = EUserStatus.Online;
+			this.joinPlatform();
+
+			let notiData: Protocol.INotifyLoginData = { userName };
+			pl.broadcast('notiLogin', notiData);
+
+			// 查看是否是重连
+			if (pl.holdList.some(ho => ho.userName == userName)) {
+				pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
+				loger.info(`reconnect::${userName}`);
+				this.reconnect();
+			}
+		}
+
+		loger.info(`login::${userName}::${flag}`);
+	}
+
+
+	logout(): void {
+		let so = this.socket;
+		let pl = this.platform;
+		let io = pl.io;
+
+		let flag: boolean;
+		if (EUserStatus.Online == this.status) {
+			this.leaveAllRooms();
+			this.status = EUserStatus.Offline;
+			pl.userList = _.without(pl.userList, this);
+
+			flag = true;
+			let resData: Protocol.IResLogoutData = { flag };
+			so.emit('resLogout', resData);
+			if (flag) {
+				let notiData: Protocol.INotifyLogoutData = { userName: this.userName };
+				pl.broadcast('notiLogout', notiData);
+				so.disconnect();
+			}
+			loger.info(`logout::${this.userName}::${flag}`);
+		}
+	}
+
+	chatToWorld(message: string) {
+		let flag = true;
+		let from = this.userName;
+		let ts = Date.now();
+		let notiData: Protocol.INotifyChat = {
+			from,
+			message,
+			timestamp: ts,
+			type: EChatType.Platform
+		};
+
+		this.socket.emit('resChat', { flag });
+		this.platform.io.emit('notiChat', notiData);
+		loger.info(`platform chat::${from}::${message}`);
+	}
+
+	chatToRoom(message: string, roomId: string) {
+		let flag = !!this.socket.rooms[roomId];
+		if (flag) {
+			let from = this.userName;
+			let ts = Date.now();
+			let notiData: Protocol.INotifyChat = {
+				from,
+				message,
+				timestamp: ts,
+				type: EChatType.Room
+			};
+			this.platform.io.to(roomId).emit('notiChat', notiData);
+			loger.info(`room chat::${roomId}::${from}::${message}`);
+		}
+		this.socket.emit('resChat', { flag });
+	}
+
+	chatToPerson(message: string, userName: string) {
+		let so = this.socket;
+		let pl = this.platform;
+		let io = pl.io;
+
+		let soId: string;
+		let us = _.find(this.platform.userList, us => us.userName == userName && us.status == EUserStatus.Online);
+		let flag = !!us;
+		if (flag) {
+			let from = this.userName;
+			let ts = Date.now();
+			let notiData: Protocol.INotifyChat = {
+				from,
+				message,
+				timestamp: ts,
+				type: EChatType.Personal
+			};
+			soId = us.socket.id;
+			let targetSo = io.sockets.sockets[soId];
+			if (!targetSo) {
+				loger.debug(us.userName);
+				loger.debug(us.socket.id);
+				loger.debug(Object.keys(io.sockets.sockets).join('\n'));
+				loger.debug('...');
+				loger.debug(pl.userList.map(us => us.userName).join('\n'));
+			} else {
+				targetSo.emit('notiChat', notiData);
+				//聊天发送者必然应该被notify
+				so.emit('notiChat', notiData);
+			}
+
+			loger.info(`personal chat::${from} => ${userName}::${message}`);
+		}
+		this.socket.emit('resChat', { flag });
+
+	}
+
+	// 加入"平台"房间
+	private joinPlatform(): void {
+		this.socket.join('platform');
+	}
+
+	// 离开"平台"房间
+	private leavePlatform(): void {
+		this.socket.leave('platform');
+	}
+
 	// 加入房间
 	joinRoom(roomId: string) {
-
+		this.socket.join(roomId);
 	}
 
 	// 离开房间
-	leaveRoom(roomId: string) {
-
+	leaveRoom(roomId: string): void {
+		this.socket.leave(roomId);
 	}
+
+	// 离开所有房间
+	leaveAllRooms(): void {
+		this.socket.leaveAll();
+	};
+
 
 	// 观战
 	watchRoom(roomId: string) {
@@ -200,11 +292,6 @@ export class User {
 		let so = this.socket;
 		let pl = this.platform;
 		let io = pl.io;
-
-
-
-
-
 
 		// 断线
 		// disconnect而且能在内存中找到socket的，才叫断线
@@ -228,6 +315,14 @@ export class User {
 
 
 
+	// 在线人数
+	private listenOnlineUserList(): void {
+		let so = this.socket;
+		let pl = this.platform;
+		let io = pl.io;
+
+
+	};
 
 
 
