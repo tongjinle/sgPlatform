@@ -143,3 +143,25 @@ export interface INotifyMatchGame {
     roomId: string;
     playerNameList: string[]
 };
+
+// 游戏操作
+export interface IReqGameAction {
+    playerName: string;
+    actionName: string;
+    actionData: any;
+};
+
+export interface IResGameAction {
+    flag: boolean;
+};
+
+export interface INotifyGameInfo{
+    type: IGameInfoType;
+    data:
+};
+
+export interface INotifyGame{
+    playerName: string;
+    // 回合下标
+    turnIndex: number;
+}

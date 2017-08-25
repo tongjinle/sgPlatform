@@ -70,7 +70,9 @@ export class Platform {
 			let ts = Date.now();
 			_.each(this.matchingList, (list, name) => {
 				while (list.length >= 2) {
-					let matchedList = list.splice(0, 2);
+					let matchedList = list
+						.splice(0, 2)
+						.map(usName => _.find(this.userList, us => us.userName == usName));
 					let ro = new Room(EGameName[name], matchedList);
 					this.roomList.push(ro);
 				}
