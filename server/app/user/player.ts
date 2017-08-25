@@ -21,7 +21,6 @@ export class Player {
 		this.offlineTs = -1;
 		this.offlineCount = 0;
 		this.lastActionTs = -1;
-		this.gameStatus = EGameStatus.Free;
 		this.isTurn = false;
 	}
 }

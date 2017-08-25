@@ -4,7 +4,8 @@ import {
     EUserStatus,
     EGameStatus,
     EFlagColor,
-    EGameName
+    EGameName,
+    EGameInfoType
 } from './enums';
 
 // ##### to client event #####
@@ -155,13 +156,40 @@ export interface IResGameAction {
     flag: boolean;
 };
 
-export interface INotifyGameInfo{
-    type: IGameInfoType;
-    data:
+
+export interface INotifyGameAction {
+    // 用来维护队列次序
+    // 因为在向客户端发送多个notify的时候,不能保证它们是能够按照一个顺序到达客户端的
+    actionIndex: number;
+    data?: any;
 };
 
-export interface INotifyGame{
+// 基本的游戏状态切换
+// 开始 暂停 恢复 结束 切换行棋者
+export interface INotifyGameInfo {
+    type: EGameInfoType;
+};
+
+export interface INotifyGameStart {
+    roomId: string;
+    gameName: EGameName;
+    playerNameList: string[];
+};
+
+
+// 回合切换
+
+// 请求当前回合的玩家
+// ** 一般来说,是
+export interface IReqGameTurn{
+    roomId: string;
+};
+
+export interface IResGameTurn{}
+
+export interface INotifyGameTurn {
+    roomId: string;
     playerName: string;
-    // 回合下标
     turnIndex: number;
-}
+};
+

@@ -35,6 +35,7 @@ export class User {
 				'reqOnlineUserList',
 				'reqChat',
 
+				'reqMatchGame',
 				'reqJoinRoom',
 				'reqLeaveRoom',
 				'reqWatchRoom',

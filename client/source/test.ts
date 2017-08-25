@@ -204,6 +204,17 @@ testList.push((cb) => {
 
 });
 
+// 测试游戏(testGame)
+// a,b,c登陆
+// a匹配游戏
+// 等待2秒，在等待的过程中，a收到它所在的某某房间还在等待
+// b匹配游戏
+// 系统将a，b匹配到一个房间，都收到匹配成功，并且开启一个新游戏的信息
+// c
+testList.push((cb)=>{
+
+});
+
 createWatcher();
 setTimeout(() => {
 

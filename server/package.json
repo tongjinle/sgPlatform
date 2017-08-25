@@ -12,10 +12,12 @@
   "dependencies": {
     "@types/async": "^2.0.38",
     "@types/jasmine": "^2.5.43",
+    "@types/seedrandom": "^2.4.27",
     "@types/socket.io": "^1.4.28",
     "@types/underscore": "^1.7.36",
     "async": "^2.1.5",
     "jasmine": "^2.5.3",
+    "seedrandom": "^2.4.3",
     "socket.io": "^1.7.3",
     "underscore": "^1.8.3"
   },

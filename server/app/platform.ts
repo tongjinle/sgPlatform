@@ -1,5 +1,9 @@
 import * as Http from 'http';
-import { EPlatformStatus, ERoomStatus, EGameName } from '../struct/enums';
+import {
+	EPlatformStatus,
+	EGameName,
+	EGameInfoType
+} from '../struct/enums';
 import { User } from './user';
 import { Player } from './user/player';
 import { Watcher } from './user/watcher';
@@ -7,6 +11,7 @@ import { Room } from './room';
 import * as SocketIO from 'socket.io';
 import loger from './loger';
 import * as _ from 'underscore';
+import * as Protocol from '../struct/protocol';
 
 
 export class Platform {
@@ -75,6 +80,7 @@ export class Platform {
 						.map(usName => _.find(this.userList, us => us.userName == usName));
 					let ro = new Room(EGameName[name], matchedList);
 					this.roomList.push(ro);
+					ro.start();
 				}
 			});
 		});

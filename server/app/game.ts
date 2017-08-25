@@ -3,7 +3,8 @@ import { Player } from './user/player';
 import { Room } from './room';
 import * as _ from 'underscore';
 import loger from './loger';
-
+import * as Protocol from '../struct/protocol';
+import * as SRnd from 'seedrandom';
 
 export interface IGameResult {
 	winer: string;
@@ -45,41 +46,97 @@ export class Game {
 	// 是否是复盘状态
 	isReplay: boolean;
 
-
+	// 随机种子发生器
+	protected seedGenerator: SRnd.prng;
+	// 当前回合数
+	protected turnIndex: number;
 	// 检验操作是否合理
-	checkActionHandlerList: ((action: GameAction) => {flag:boolean,reason:string})[];
-
+	protected checkActionHandlerList: ((action: GameAction) => boolean)[];
+	// 处理操作列表
+	protected parseActionHandlerList: { [actionName: string]: (action: GameAction) => void }[];
 
 	constructor() {
 		this.id = _.uniqueId();
+		this.seed = 10000;
+		{
+			let n = 10;
+			while (n--) {
+				loger.info(`seedrandom::${this.seedGenerator.int32()}`);
+			}
+		}
+		this.seedGenerator = SRnd(this.seed.toString());
 		this.playerList = [];
-
+		this.parseActionHandlerList = [];
+		this.status = EGameStatus.Prepare;
+		SRnd()
 	};
 
 	// 开始游戏
-	start(): void { };
+	start(): void {
+		this.status = EGameStatus.Play;
+		let ro = this.room;
+		let notiData: Protocol.INotifyGameStart = {
+			roomId: ro.id,
+			gameName: ro.gameName,
+			playerNameList: ro.playerList.map(pler => pler.userName)
+		};
+		ro.notifyAll('notiMatchGame', notiData);
 
-
-	// 获取当前回合的选手
-	getTurn(): Player {
-		let ret: Player;
-		return ret;
+		this.notifyTurn();
 	};
 
+
+	private notifyTurn(): void {
+		let pler = _.find(this.playerList, pler => pler.isTurn);
+		if (pler) {
+			let plNameInTurn = pler.userName;
+			let ro = this.room;
+			let notiData: Protocol.INotifyGameTurn = {
+				roomId: ro.id,
+				playerName: plNameInTurn,
+				turnIndex: this.turnIndex
+			};
+			ro.notifyAll('notiGameTurn', notiData);
+		}
+		else {
+			loger.error(`game::notifyTurn::${this.playerList.map(pl => pl.userName + '==' + pl.isTurn).join('\n')}`);
+		}
+	}
+
+	// 获取当前回合的选手
+	// 需要具体的游戏去重写这个方法
+	turn(): string { return undefined; };
+
+
+	// 检验玩家发出的游戏操作
+	checkAction(action: GameAction): boolean {
+		let ret: boolean;
+		let list = this.checkActionHandlerList;
+		return list.every(handler => handler(action));
+	};
 
 
 
 	// 处理游戏操作信息
 	parseAction(action: GameAction): void {
-
-	}
+		let list = this.parseActionHandlerList;
+		let handler = list[action.actionName];
+		if (handler) {
+			handler(action);
+		}
+	};
 
 
 	// 暂停游戏
-	pause(): void { };
+	pause(): void {
+		this.status = EGameStatus.Pause;
+	};
+
 
 	// 结束游戏
-	end(): void { };
+	end(): void {
+		this.status = EGameStatus.End;
+	};
 
 
 

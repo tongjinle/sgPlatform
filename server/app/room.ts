@@ -1,11 +1,13 @@
-import { EGameName, ERoomStatus } from '../struct/enums';
+import { EGameName } from '../struct/enums';
 import { User } from './user';
 import { Game, GameAction } from './game';
 import { Player } from './user/player';
 import { Watcher } from './user/watcher';
 import { Sanguo } from './game/sanguo';
+import { TestGame } from './game/testgame';
 import loger from './loger';
 import { Platform } from './platform';
+import * as Protocol from '../struct/protocol';
 
 export class Room {
 	id: string;
@@ -16,22 +18,13 @@ export class Room {
 	maxWatcherCount: number;
 	canWatch: boolean;
 	canPlay: boolean;
+	gameName: EGameName;
 	game: Game;
 
-	private _status: ERoomStatus;
-	public get status(): ERoomStatus {
-		return this._status;
-	}
-	public set status(v: ERoomStatus) {
-		this._status = v;
 
-		if (ERoomStatus.Prepare == v) {
-
-		}
-	}
 
 	constructor(gameName: EGameName, playerList: User[]) {
-		this.status = ERoomStatus.Prepare;
+		this.gameName = gameName;
 		// create game;
 		let ga = this.game = this.createGame(gameName);
 		ga.room = this;
@@ -41,9 +34,15 @@ export class Room {
 			let pler = new Player(plName);
 			ga.playerList.push(pler);
 		});
+	};
 
-		ga.start();
-		this.status = ERoomStatus.Play;
+
+	// 开始
+	start(): void {
+		let ga = this.game;
+		if (ga) {
+			ga.start();
+		}
 	}
 
 	// 工厂
@@ -51,9 +50,12 @@ export class Room {
 		if (EGameName.Sanguo == gameName) {
 			return new Sanguo();
 		}
+		else if(EGameName.TestGame == gameName)
+		{
+			return new TestGame();
+		}
 	}
 
-	// 
 	// 接受游戏操作信息
 	accpetAction(action: GameAction): void {
 		let ro = this;
@@ -63,28 +65,22 @@ export class Room {
 		loger.info(`acceptAction::${ro.id}::${playerName}::${actionName}::${JSON.stringify(actionData)}`);
 
 		let checkRet: { flag: boolean, reason: string };
-		let hasErr: boolean = ga.checkActionHandlerList.some(chHandler => {
-			checkRet = chHandler(action);
-			if (!checkRet.flag) {
-				loger.error(``);
-				return true;
-			}
-		});
+		let hasErr: boolean = ga.checkAction(action);
 
 		if (!hasErr) {
 			ga.parseAction(action);
 			let resData = { flag: true };
 			ro.notifyAll(ga.updateValueList[ga.updateValueList.length - 1]);
 		}
-		ro.resPlayer(playerName, { flag: hasErr });
+		ro.resPlayer(playerName,'resGameAction', { flag: hasErr });
 	};
 
 	// 反馈action的操作结果给发起action的player
 	// 一般来说,就是反馈一个布尔值,表示是不是action被执行
-	resPlayer(playerName: string, data: any) {
+	resPlayer(playerName: string, event: string, ...data: any[]) {
 		this.playerList.some(pler => {
 			if (playerName == pler.userName) {
-				pler.socket.emit('resGameAction', data);
+				pler.socket.emit(event, ...data);
 				return true;
 			}
 		});
@@ -92,7 +88,7 @@ export class Room {
 
 
 	// 通知给所有对战者和观战者
-	notifyAll(data: any) {
-		this.platform.io.to(this.id).emit('notiGameAction', data);
+	notifyAll(event: string, ...args: any[]) {
+		this.platform.io.to(this.id).emit(event, ...args);
 	}
 }

@@ -23,7 +23,7 @@ export enum EUserStatus {
 
 // 房间状态
 // 预备中 进行中 暂停 结束
-export enum ERoomStatus{
+export enum EGameStatus{
 	Prepare,
 	Play,
 	Pause,
@@ -31,12 +31,12 @@ export enum ERoomStatus{
 };
 
 
-// 空闲,观战,游戏中
-export enum EGameStatus {
-	Free,
-	Watch,
-	Play
-};
+// // 空闲,观战,游戏中
+// export enum EPlayerStatus {
+// 	Free,
+// 	Watch,
+// 	Play
+// };
 
 
 // 队伍颜色
@@ -51,5 +51,18 @@ export enum EGameName {
 	Sanguo,
 	Majiang,
 	ChineseChess
+};
+
+
+// 游戏信息类型
+export enum EGameInfoType{
+	Action,
+	Query,
+	// 系统主动发出的通知
+	// 比如"游戏开始"这样的
+	Start,
+	Pause,
+	Resume,
+	End	
 };
 
