@@ -48,6 +48,7 @@ export enum EFlagColor {
 
 // 游戏类型
 export enum EGameName {
+	TestGame,
 	Sanguo,
 	Majiang,
 	ChineseChess

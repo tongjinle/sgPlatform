@@ -133,12 +133,14 @@ export interface IGameRule {
 // 匹配游戏
 export interface IReqMatchGame {
     name: EGameName;
-    extData: {};
+    extData?: {};
 };
 
 export interface IResMatchGame {
     flag: boolean;
 };
+
+export interface INotifyMatchingGame{}
 
 export interface INotifyMatchGame {
     roomId: string;
@@ -164,11 +166,7 @@ export interface INotifyGameAction {
     data?: any;
 };
 
-// 基本的游戏状态切换
-// 开始 暂停 恢复 结束 切换行棋者
-export interface INotifyGameInfo {
-    type: EGameInfoType;
-};
+
 
 export interface INotifyGameStart {
     roomId: string;

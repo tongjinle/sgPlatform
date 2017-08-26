@@ -2,6 +2,8 @@ import * as io from "socket.io-client";
 import * as _ from 'underscore';
 import * as async from 'async';
 
+console.log(new Date().toTimeString());
+
 let watcher;
 let watchedList: { userName: string, status: boolean }[] = [];
 let watchedChatList: {
@@ -204,21 +206,90 @@ testList.push((cb) => {
 
 });
 
-// 测试游戏(testGame)
+// 测试游戏(testGame),test是个石头剪刀布的游戏
 // a,b,c登陆
 // a匹配游戏
 // 等待2秒，在等待的过程中，a收到它所在的某某房间还在等待
 // b匹配游戏
 // 系统将a，b匹配到一个房间，都收到匹配成功，并且开启一个新游戏的信息
-// c
-testList.push((cb)=>{
+// 系统通知a是第一个轮到的人[因为testGame是按照匹配顺序来的],消息发送给a,b
+// a发出一个action,请求出"锤子"
+// 系统通知b的turn
+// b发出一个action,请求出"布"
+// 系统进行判断,发出b胜利的信息,通知a和b
+testList.push((cb) => {
+	let userNameList = ['a', 'b', 'c'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	let aList = infoList['a'] = [];
+	let bList = infoList['b'] = [];
+	async.series([
+		cb => {
+			userNameList.forEach(usName => {
+				let so = createSocket();
+				soList[usName] = so;
 
+				so.on('resMatchGame', data => {
+					infoList[usName].push({ event: 'resMatchGame', data });
+				});
+
+				so.on('notiMatchingGame', data => {
+					infoList[usName].push({ event: 'notiMatchingGame', data: undefined });
+				});
+
+				so.on('notiMatchGame', data => {
+					let { roomId, playerNameList } = data;
+					infoList[usName].push({ event: 'notiMatchGame', data });
+				});
+
+
+				so.on('resGameAction', data => {
+				});
+
+				so.on('notiGameAction', data => {
+					let list = infoList[usName];
+					list.push(data);
+				});
+
+				login(so, usName);
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			soList['a'].emit('reqMatchGame', {
+				name: 'TestGame'
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let aHearResMatchGame = infoList['a'].some(n => n.event == 'resMatchGame');
+			let aHearNotiMatchingGame = infoList['a'].some(n => n.event == 'notiMatchingGame');
+			console.assert(aHearResMatchGame && aHearNotiMatchingGame, 'a hear resMatchGame && a hear notiMatchingGame  ');
+			cb();
+		},
+		cb=>{
+			soList['b'].emit('reqMatchGame', {
+				name: 'TestGame'
+			});
+			setTimeout(cb, 10000);
+		},
+		cb=>{
+			let bHearResMatchGame = infoList['b'].some(n => n.event == 'resMatchGame');
+			console.assert(bHearResMatchGame, 'a hear resMatchGame ');
+
+			setTimeout(cb, 2000);
+		},
+		cb=>{
+			console.log(JSON.stringify(infoList,null,4));
+			cb();
+		}
+	], clear.bind(null, cb));
 });
 
 createWatcher();
 setTimeout(() => {
-
-	async.eachSeries(testList/*.slice(1)*/, (te, cb) => te(cb), () => {
+	let list = testList;
+	list = [testList[testList.length - 1]];
+	async.eachSeries(list, (te, cb) => te(cb), () => {
 		console.log('test complete');
 	});
 

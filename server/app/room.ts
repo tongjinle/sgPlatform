@@ -4,7 +4,7 @@ import { Game, GameAction } from './game';
 import { Player } from './user/player';
 import { Watcher } from './user/watcher';
 import { Sanguo } from './game/sanguo';
-import { TestGame } from './game/testgame';
+import { TestGame } from './game/testGame';
 import loger from './loger';
 import { Platform } from './platform';
 import * as Protocol from '../struct/protocol';

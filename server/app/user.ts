@@ -1,4 +1,10 @@
-import { EPlatformStatus, EUserStatus, EGameStatus, EChatType } from '../struct/enums';
+import {
+	EPlatformStatus,
+	EUserStatus,
+	EGameStatus,
+	EChatType,
+	EGameName
+} from '../struct/enums';
 import { Platform } from './platform';
 import { Room } from './Room';
 import { Game } from './game';
@@ -111,15 +117,25 @@ export class User {
 			// 匹配游戏
 			so.on('reqMatchGame', (data: Protocol.IReqMatchGame) => {
 				let { name } = data;
-				// 登记自己在匹配
-				let list = pl.matchingList[name] = pl.matchingList[name] || [];
-				let flag: boolean;
-				flag = !list.some(usName => usName == this.userName)
-				if (flag) {
-					list.push(this.userName);
-					let resData: Protocol.IResMatchGame = { flag };
-					so.emit('resMatchGame', resData);
+				let flag: boolean = false;
+				let reason: string = '';
+				// 查看是否存在这个游戏种类
+				if (EGameName[name] !== undefined) {
+					// 登记自己在匹配
+					let list = pl.matchingList[name] = pl.matchingList[name] || [];
+					flag = !list.some(usName => usName == this.userName)
+					if (flag) {
+						list.push(this.userName);
+						let resData: Protocol.IResMatchGame = { flag };
+						so.emit('resMatchGame', resData);
+
+					} else {
+						reason = 'Same Matching';
+					}
+				} else {
+					reason = 'GameType Err';
 				}
+				loger.info(`matchGame::${this.userName}::${EGameName[name]}::${flag}::${reason}`);
 			});
 
 			// 退出房间
@@ -317,7 +333,13 @@ export class User {
 
 				loger.info(`disconnect : ${this.userName}`);
 
-				pl.holdList.push({ userName: this.userName, ts: new Date().getTime() });
+
+				// 压入'重连'列表
+				pl.holdList.push({ userName: this.userName, ts: Date.now() });
+
+
+				// 清理
+				pl.clear(this);
 			}
 		});
 

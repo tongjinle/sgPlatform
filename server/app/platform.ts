@@ -78,12 +78,29 @@ export class Platform {
 					let matchedList = list
 						.splice(0, 2)
 						.map(usName => _.find(this.userList, us => us.userName == usName));
-					let ro = new Room(EGameName[name], matchedList);
-					this.roomList.push(ro);
-					ro.start();
+					// let ro = new Room(EGameName[name], matchedList);
+					// this.roomList.push(ro);
+					// ro.start();
 				}
+				// notify user MATCHING
+				list.forEach(usName => {
+					let us = _.find(this.userList, us => us.userName == usName);
+					if (us) {
+						us.socket.emit('notiMatchingGame');
+					}
+				});
 			});
-		});
+		}, 5000);
+	}
+
+	clear(user: User): void {
+		// 将掉线的user从matchingList中移除
+		{
+			let map = this.matchingList;
+			_.each(map, (list, gameName) => {
+				list = list.filter(usName => usName != user.userName);
+			});
+		}
 	}
 
 	private static plSingle: Platform;
