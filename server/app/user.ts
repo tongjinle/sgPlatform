@@ -135,7 +135,7 @@ export class User {
 				} else {
 					reason = 'GameType Err';
 				}
-				loger.info(`matchGame::${this.userName}::${EGameName[name]}::${flag}::${reason}`);
+				loger.info(`resMatchGame::${this.userName}::${EGameName[name]}::${flag}::${reason}`);
 			});
 
 			// 退出房间

@@ -58,13 +58,13 @@ export class Game {
 	constructor() {
 		this.id = _.uniqueId();
 		this.seed = 10000;
+		this.seedGenerator = SRnd(this.seed.toString());
 		{
 			let n = 10;
 			while (n--) {
 				loger.info(`seedrandom::${this.seedGenerator.int32()}`);
 			}
 		}
-		this.seedGenerator = SRnd(this.seed.toString());
 		this.playerList = [];
 		this.parseActionHandlerList = [];
 		this.status = EGameStatus.Prepare;

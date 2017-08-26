@@ -11,7 +11,6 @@ import * as Protocol from '../struct/protocol';
 
 export class Room {
 	id: string;
-	platform: Platform;
 	playerList: User[];
 	maxPlayerCount: number;
 	watcherList: User[];
@@ -25,6 +24,9 @@ export class Room {
 
 	constructor(gameName: EGameName, playerList: User[]) {
 		this.gameName = gameName;
+		this.playerList = playerList;
+		this.watcherList = [];
+		
 		// create game;
 		let ga = this.game = this.createGame(gameName);
 		ga.room = this;
@@ -89,6 +91,8 @@ export class Room {
 
 	// 通知给所有对战者和观战者
 	notifyAll(event: string, ...args: any[]) {
-		this.platform.io.to(this.id).emit(event, ...args);
+		let pl = Platform.getInstance();
+		let io = pl.io;
+		io.to(this.id).emit(event, ...args);
 	}
 }

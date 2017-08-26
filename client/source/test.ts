@@ -258,7 +258,7 @@ testList.push((cb) => {
 			soList['a'].emit('reqMatchGame', {
 				name: 'TestGame'
 			});
-			setTimeout(cb, 2000);
+			setTimeout(cb, 10000);
 		},
 		cb => {
 			let aHearResMatchGame = infoList['a'].some(n => n.event == 'resMatchGame');
@@ -270,7 +270,7 @@ testList.push((cb) => {
 			soList['b'].emit('reqMatchGame', {
 				name: 'TestGame'
 			});
-			setTimeout(cb, 10000);
+			setTimeout(cb, 2000);
 		},
 		cb=>{
 			let bHearResMatchGame = infoList['b'].some(n => n.event == 'resMatchGame');

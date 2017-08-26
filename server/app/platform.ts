@@ -78,18 +78,21 @@ export class Platform {
 					let matchedList = list
 						.splice(0, 2)
 						.map(usName => _.find(this.userList, us => us.userName == usName));
-					// let ro = new Room(EGameName[name], matchedList);
-					// this.roomList.push(ro);
-					// ro.start();
+					let ro = new Room(EGameName[name], matchedList);
+					this.roomList.push(ro);
+					ro.start();
+					loger.info(`notiMatchGame::${matchedList.map(us=>us.userName).join('&')}`);
 				}
 				// notify user MATCHING
 				list.forEach(usName => {
 					let us = _.find(this.userList, us => us.userName == usName);
 					if (us) {
 						us.socket.emit('notiMatchingGame');
+						loger.info(`notiMatchingGame::${us.userName}`);
 					}
 				});
 			});
+			// console.log(JSON.stringify(this.matchingList, null, 4));
 		}, 5000);
 	}
 
@@ -101,6 +104,8 @@ export class Platform {
 				list = list.filter(usName => usName != user.userName);
 			});
 		}
+		// 如果有人退出,则要把游戏自动结束,认为这样是一种投降
+		// todo
 	}
 
 	private static plSingle: Platform;
