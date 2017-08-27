@@ -59,16 +59,11 @@ export class Game {
 		this.id = _.uniqueId();
 		this.seed = 10000;
 		this.seedGenerator = SRnd(this.seed.toString());
-		{
-			let n = 10;
-			while (n--) {
-				loger.info(`seedrandom::${this.seedGenerator.int32()}`);
-			}
-		}
 		this.playerList = [];
 		this.parseActionHandlerList = [];
 		this.status = EGameStatus.Prepare;
-		SRnd()
+		this.turnIndex = -1;
+
 	};
 
 	// 开始游戏
@@ -80,13 +75,15 @@ export class Game {
 			gameName: ro.gameName,
 			playerNameList: ro.playerList.map(pler => pler.userName)
 		};
-		ro.notifyAll('notiMatchGame', notiData);
+		ro.notifyAll('notiGameStart', notiData);
 
 		this.notifyTurn();
 	};
 
 
 	private notifyTurn(): void {
+		this.turn();
+
 		let pler = _.find(this.playerList, pler => pler.isTurn);
 		if (pler) {
 			let plNameInTurn = pler.userName;
@@ -97,6 +94,7 @@ export class Game {
 				turnIndex: this.turnIndex
 			};
 			ro.notifyAll('notiGameTurn', notiData);
+			loger.info(`game::notifyGameTurn::${JSON.stringify(notiData)}`);
 		}
 		else {
 			loger.error(`game::notifyTurn::${this.playerList.map(pl => pl.userName + '==' + pl.isTurn).join('\n')}`);
@@ -105,7 +103,7 @@ export class Game {
 
 	// 获取当前回合的选手
 	// 需要具体的游戏去重写这个方法
-	turn(): string { return undefined; };
+	protected turn(): string { return undefined; };
 
 
 	// 检验玩家发出的游戏操作

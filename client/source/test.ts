@@ -258,7 +258,7 @@ testList.push((cb) => {
 			soList['a'].emit('reqMatchGame', {
 				name: 'TestGame'
 			});
-			setTimeout(cb, 10000);
+			setTimeout(cb, 8000);
 		},
 		cb => {
 			let aHearResMatchGame = infoList['a'].some(n => n.event == 'resMatchGame');
@@ -274,8 +274,15 @@ testList.push((cb) => {
 		},
 		cb=>{
 			let bHearResMatchGame = infoList['b'].some(n => n.event == 'resMatchGame');
-			console.assert(bHearResMatchGame, 'a hear resMatchGame ');
-
+			console.assert(bHearResMatchGame, 'b hear resMatchGame ');
+			cb();
+		},
+		cb=>{
+			let aHearNotiGameStart = infoList['a'].some(n => n.event == 'notiGameStart');
+			let bHearNotiGameStart = infoList['b'].some(n => n.event == 'notiGameStart');
+			
+			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn');
+			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn');
 			setTimeout(cb, 2000);
 		},
 		cb=>{
