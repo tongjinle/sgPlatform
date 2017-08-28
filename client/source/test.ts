@@ -283,6 +283,10 @@ testList.push((cb) => {
 			
 			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn');
 			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn');
+
+			console.assert(aHearNotiGameStart && bHearNotiGameStart);
+			console.assert(aHearNotiGameTurn && bHearNotiGameTurn);
+			
 			setTimeout(cb, 2000);
 		},
 		cb=>{
