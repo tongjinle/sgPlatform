@@ -1,4 +1,4 @@
-import { EGameStatus } from '../struct/enums';
+import { EGameStatus, EGameName } from '../struct/enums';
 import { Player } from './user/player';
 import { Room } from './room';
 import * as _ from 'underscore';
@@ -75,7 +75,9 @@ export class Game {
 			gameName: ro.gameName,
 			playerNameList: ro.playerList.map(pler => pler.userName)
 		};
+
 		ro.notifyAll('notiGameStart', notiData);
+		loger.info(`game::start::${ro.id}::${EGameName[ro.gameName]}`);
 
 		this.notifyTurn();
 	};

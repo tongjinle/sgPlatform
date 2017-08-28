@@ -8,6 +8,8 @@ import { TestGame } from './game/testGame';
 import loger from './loger';
 import { Platform } from './platform';
 import * as Protocol from '../struct/protocol';
+import * as _ from 'underscore';
+
 
 export class Room {
 	id: string;
@@ -23,15 +25,21 @@ export class Room {
 
 
 	constructor(gameName: EGameName, playerList: User[]) {
+		this.id = _.uniqueId();
 		this.gameName = gameName;
 		this.playerList = playerList;
 		this.watcherList = [];
-		
+
+		// join room
+		this.playerList.forEach(us => {
+			us.socket.join(this.id);
+		});
+
 		// create game;
 		let ga = this.game = this.createGame(gameName);
 		ga.room = this;
 		// push player;
-		playerList.forEach(us => {
+		this.playerList.forEach(us => {
 			let plName = us.userName;
 			let pler = new Player(plName);
 			ga.playerList.push(pler);
@@ -52,8 +60,7 @@ export class Room {
 		if (EGameName.Sanguo == gameName) {
 			return new Sanguo();
 		}
-		else if(EGameName.TestGame == gameName)
-		{
+		else if (EGameName.TestGame == gameName) {
 			return new TestGame();
 		}
 	}
@@ -74,7 +81,7 @@ export class Room {
 			let resData = { flag: true };
 			ro.notifyAll(ga.updateValueList[ga.updateValueList.length - 1]);
 		}
-		ro.resPlayer(playerName,'resGameAction', { flag: hasErr });
+		ro.resPlayer(playerName, 'resGameAction', { flag: hasErr });
 	};
 
 	// 反馈action的操作结果给发起action的player

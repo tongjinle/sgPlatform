@@ -241,6 +241,14 @@ testList.push((cb) => {
 					infoList[usName].push({ event: 'notiMatchGame', data });
 				});
 
+				so.on('notiGameStart', data => {
+					infoList[usName].push({ event: 'notiGameStart', data });
+				});
+
+				so.on('notiGameTurn', data => {
+					infoList[usName].push({ event: 'notiGameTurn', data });
+				});
+
 
 				so.on('resGameAction', data => {
 				});
@@ -266,33 +274,62 @@ testList.push((cb) => {
 			console.assert(aHearResMatchGame && aHearNotiMatchingGame, 'a hear resMatchGame && a hear notiMatchingGame  ');
 			cb();
 		},
-		cb=>{
+		cb => {
 			soList['b'].emit('reqMatchGame', {
 				name: 'TestGame'
 			});
 			setTimeout(cb, 2000);
 		},
-		cb=>{
+		cb => {
 			let bHearResMatchGame = infoList['b'].some(n => n.event == 'resMatchGame');
 			console.assert(bHearResMatchGame, 'b hear resMatchGame ');
 			cb();
 		},
-		cb=>{
+		cb => {
 			let aHearNotiGameStart = infoList['a'].some(n => n.event == 'notiGameStart');
 			let bHearNotiGameStart = infoList['b'].some(n => n.event == 'notiGameStart');
-			
-			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn');
-			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn');
+
+			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'a');
+			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'a');
 
 			console.assert(aHearNotiGameStart && bHearNotiGameStart);
 			console.assert(aHearNotiGameTurn && bHearNotiGameTurn);
-			
+
 			setTimeout(cb, 2000);
 		},
-		cb=>{
-			console.log(JSON.stringify(infoList,null,4));
+		cb => {
+			console.log(JSON.stringify(infoList, null, 4));
+			cb();
+		},
+		cb => {
+			soList['a'].emit('reqGameAction', {
+				actionName: 'gesture',
+				actionData: 'cuizi'
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+
+			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'b');
+			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'b');
+			console.assert(aHearNotiGameTurn && bHearNotiGameTurn);
+			cb();
+		},
+		cb => {
+
+			soList['b'].emit('reqGameAction', {
+				actionName: 'gesture',
+				actionData: 'bu'
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let aHearNotiGameEnd = infoList['a'].some(n => n.event == 'notiGameEnd');
+			let bHearNotiGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd');
+			console.assert(aHearNotiGameEnd && bHearNotiGameEnd);
 			cb();
 		}
+
 	], clear.bind(null, cb));
 });
 

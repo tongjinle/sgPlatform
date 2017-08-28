@@ -148,10 +148,9 @@ export interface INotifyMatchGame {
 };
 
 // 游戏操作
-export interface IReqGameAction {
-    playerName: string;
+export interface IReqGameAction<T> {
     actionName: string;
-    actionData: any;
+    actionData: T;
 };
 
 export interface IResGameAction {
@@ -159,21 +158,28 @@ export interface IResGameAction {
 };
 
 
-export interface INotifyGameAction {
+export interface INotifyGameAction<T> {
     // 用来维护队列次序
     // 因为在向客户端发送多个notify的时候,不能保证它们是能够按照一个顺序到达客户端的
     actionIndex: number;
-    data?: any;
+    actionName: string;
+    data: T;
 };
 
 
-
+//游戏开始
 export interface INotifyGameStart {
     roomId: string;
     gameName: EGameName;
     playerNameList: string[];
 };
 
+
+// 游戏结束
+export interface INotifyGameEnd<T>{
+    roomId: string;
+    result: T;
+};
 
 // 回合切换
 
