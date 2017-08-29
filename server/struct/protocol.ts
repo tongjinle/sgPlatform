@@ -149,6 +149,7 @@ export interface INotifyMatchGame {
 
 // 游戏操作
 export interface IReqGameAction<T> {
+    roomId: string;
     actionName: string;
     actionData: T;
 };

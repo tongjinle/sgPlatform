@@ -10,10 +10,10 @@ export interface IGameResult {
 	winer: string;
 };
 
-export class GameAction {
+export class GameAction<T> {
 	playerName: string;
 	actionName: string;
-	actionData: any;
+	actionData: T;
 };
 
 export class Game {
@@ -40,7 +40,7 @@ export class Game {
 	// 当前状态
 	currValue: any;
 	// '真实'操作列表
-	realActionList: GameAction[];
+	realActionList: GameAction<any>[];
 	// 状态更新列表
 	updateValueList: any[];
 	// 是否是复盘状态
@@ -51,20 +51,40 @@ export class Game {
 	// 当前回合数
 	protected turnIndex: number;
 	// 检验操作是否合理
-	protected checkActionHandlerList: ((action: GameAction) => boolean)[];
+	protected checkActionHandlerList: ((action: GameAction<any>) => boolean)[];
 	// 处理操作列表
-	protected parseActionHandlerList: { [actionName: string]: (action: GameAction) => void }[];
+	protected parseActionHandlerList: { [actionName: string]: (action: GameAction<any>) => void };
 
 	constructor() {
 		this.id = _.uniqueId();
 		this.seed = 10000;
 		this.seedGenerator = SRnd(this.seed.toString());
 		this.playerList = [];
-		this.parseActionHandlerList = [];
+		this.checkActionHandlerList = [];
+		this.parseActionHandlerList = {};
 		this.status = EGameStatus.Prepare;
 		this.turnIndex = -1;
 
+		// check init
+		this.initCheckActionHandlerList();
 	};
+
+	private initCheckActionHandlerList(): void {
+		let list = this.checkActionHandlerList;
+
+		// 游戏不在play的状态
+		list.push((action: GameAction<any>) => {
+			return this.status == EGameStatus.Play;
+		});
+
+		// 没有行棋者 或者 非行棋者发出请求
+		list.push((action : GameAction<any>)=> {
+			let pler = this.playerList[this.turnIndex];
+			if (!pler || !pler.isTurn) { return false;}
+		 });
+
+
+	}
 
 	// 开始游戏
 	start(): void {
@@ -83,7 +103,7 @@ export class Game {
 	};
 
 
-	private notifyTurn(): void {
+	protected notifyTurn(): void {
 		this.turn();
 
 		let pler = _.find(this.playerList, pler => pler.isTurn);
@@ -109,7 +129,7 @@ export class Game {
 
 
 	// 检验玩家发出的游戏操作
-	checkAction(action: GameAction): boolean {
+	checkAction(action: GameAction<any>): boolean {
 		let ret: boolean;
 		let list = this.checkActionHandlerList;
 		return list.every(handler => handler(action));
@@ -118,7 +138,7 @@ export class Game {
 
 
 	// 处理游戏操作信息
-	parseAction(action: GameAction): void {
+	parseAction(action: GameAction<any>): void {
 		let list = this.parseActionHandlerList;
 		let handler = list[action.actionName];
 		if (handler) {

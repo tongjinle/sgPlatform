@@ -12,6 +12,7 @@ import * as SocketIO from 'socket.io';
 import * as Protocol from '../struct/protocol';
 import loger from './loger';
 import * as _ from 'underscore';
+import { Game, GameAction } from './game';
 
 
 export class User {
@@ -42,6 +43,7 @@ export class User {
 				'reqChat',
 
 				'reqMatchGame',
+				'reqGameAction',
 				'reqJoinRoom',
 				'reqLeaveRoom',
 				'reqWatchRoom',
@@ -63,8 +65,7 @@ export class User {
 			// 反监听
 			[
 				'reqLogin',
-				'reqOnlineUserList',
-				'reqChat'
+				'reqOnlineUserList'
 			].forEach(eventName => {
 				so.removeAllListeners(eventName);
 			});
@@ -136,6 +137,19 @@ export class User {
 					reason = 'GameType Err';
 				}
 				loger.info(`resMatchGame::${this.userName}::${EGameName[name]}::${flag}::${reason}`);
+			});
+
+			// 游戏操作
+			so.on('reqGameAction', (data: Protocol.IReqGameAction<any>) => { 
+				let { roomId, actionName,actionData } = data;
+				let ro = _.find(pl.roomList, ro => ro.id == roomId);
+
+				let action :GameAction<any> = {
+					playerName:this.userName,
+					actionName,
+					actionData
+				};
+				ro.accpetAction(action);
 			});
 
 			// 退出房间

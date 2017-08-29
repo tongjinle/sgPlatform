@@ -292,8 +292,8 @@ testList.push((cb) => {
 			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'a');
 			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'a');
 
-			console.assert(aHearNotiGameStart && bHearNotiGameStart);
-			console.assert(aHearNotiGameTurn && bHearNotiGameTurn);
+			console.assert(aHearNotiGameStart && bHearNotiGameStart, 'a & b hear notiGameStart');
+			console.assert(aHearNotiGameTurn && bHearNotiGameTurn, 'a & b hear notiGameTurn, it is [a] turn');
 
 			setTimeout(cb, 2000);
 		},
@@ -304,7 +304,7 @@ testList.push((cb) => {
 		cb => {
 			soList['a'].emit('reqGameAction', {
 				actionName: 'gesture',
-				actionData: 'cuizi'
+				actionData: { gesture: 'cuizi' }
 			});
 			setTimeout(cb, 2000);
 		},
@@ -312,20 +312,20 @@ testList.push((cb) => {
 
 			let aHearNotiGameTurn = infoList['a'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'b');
 			let bHearNotiGameTurn = infoList['b'].some(n => n.event == 'notiGameTurn' && n.data.playerName == 'b');
-			console.assert(aHearNotiGameTurn && bHearNotiGameTurn);
+			console.assert(aHearNotiGameTurn && bHearNotiGameTurn, 'a & b hear notiGameTurn, it is [b] turn');
 			cb();
 		},
 		cb => {
 
 			soList['b'].emit('reqGameAction', {
 				actionName: 'gesture',
-				actionData: 'bu'
+				actionData: { gesture: 'bu' }
 			});
 			setTimeout(cb, 2000);
 		},
 		cb => {
-			let aHearNotiGameEnd = infoList['a'].some(n => n.event == 'notiGameEnd');
-			let bHearNotiGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd');
+			let aHearNotiGameEnd = infoList['a'].some(n => n.event == 'notiGameEnd' && n.data.result.winner == 'b');
+			let bHearNotiGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd' && n.data.result.winner == 'b');
 			console.assert(aHearNotiGameEnd && bHearNotiGameEnd);
 			cb();
 		}

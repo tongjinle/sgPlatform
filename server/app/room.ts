@@ -66,7 +66,7 @@ export class Room {
 	}
 
 	// 接受游戏操作信息
-	accpetAction(action: GameAction): void {
+	accpetAction(action: GameAction<any>): void {
 		let ro = this;
 		let ga = this.game;
 
@@ -101,5 +101,11 @@ export class Room {
 		let pl = Platform.getInstance();
 		let io = pl.io;
 		io.to(this.id).emit(event, ...args);
+	}
+
+
+	// 结束
+	end():void{
+		// todo
 	}
 }
