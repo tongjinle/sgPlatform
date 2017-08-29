@@ -40,9 +40,23 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 			}
 		);
 
+		// gesture只能是石头剪刀布
+		this.checkActionHandlerList.push(
+			(action: GameAction<ITestGameGestureAction>) => {
+				let pler = this.playerList[this.turnIndex];
+				let { gestureName } = action.actionData;
+
+				let map = this.gestureMap;
+				console.log(TestGame.gestureList, gestureName);
+				let flag = TestGame.gestureList.indexOf(gestureName) >= 0;
+				if (!flag) {
+					loger.error(`game::check::NO SUCH GESTURE`);
+				}
+				return flag;
+			});
+
 		this.parseActionHandlerList['gesture'] =
 			(action: GameAction<ITestGameGestureAction>) => {
-				console.log(1232312321);
 				let pler = this.playerList[this.turnIndex];
 				let { gestureName } = action.actionData;
 
@@ -98,6 +112,8 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 			n.code = geList.indexOf(map[i].gestureName);
 		});
 
+		console.log(arr);
+
 		let winnerIndex = -1;
 		if (arr[0].code == 0 && arr[1].code == 2) {
 			winnerIndex = 0;
@@ -109,6 +125,7 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 			let sub = arr[0].code - arr[1].code;
 			winnerIndex = sub == 0 ? -1 : sub > 0 ? 0 : 1;
 		}
+		console.log(winnerIndex);
 		this.winner = winnerIndex == 0 ? undefined : this.playerList[winnerIndex];
 	}
 }

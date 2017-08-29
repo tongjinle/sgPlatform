@@ -261,6 +261,11 @@ testList.push((cb) => {
 					list.push(data);
 				});
 
+
+				so.on('notiGameEnd', data => {
+					infoList[usName].push({ event: 'notiGameEnd', data });
+				});
+
 				login(so, usName);
 			});
 			setTimeout(cb, 2000);
@@ -304,7 +309,7 @@ testList.push((cb) => {
 			soList['a'].emit('reqGameAction', {
 				roomId,
 				actionName: 'gesture',
-				actionData: { gesture: 'cuizi' }
+				actionData: { gestureName: 'cuizi' }
 			});
 			setTimeout(cb, 2000);
 		},
@@ -320,7 +325,7 @@ testList.push((cb) => {
 			soList['b'].emit('reqGameAction', {
 				roomId,
 				actionName: 'gesture',
-				actionData: { gesture: 'bu' }
+				actionData: { gestureName: 'bu' }
 			});
 			setTimeout(cb, 2000);
 		},
