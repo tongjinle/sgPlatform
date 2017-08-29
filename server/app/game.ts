@@ -62,6 +62,7 @@ export class Game {
 		this.playerList = [];
 		this.checkActionHandlerList = [];
 		this.parseActionHandlerList = {};
+		this.updateValueList = [];
 		this.status = EGameStatus.Prepare;
 		this.turnIndex = -1;
 
@@ -74,13 +75,21 @@ export class Game {
 
 		// 游戏不在play的状态
 		list.push((action: GameAction<any>) => {
-			return this.status == EGameStatus.Play;
+			let flag = this.status == EGameStatus.Play;
+			if(!flag){
+				loger.error(`game::check::ERR NOT PLAY STATUS`);
+			}
+			return flag;
 		});
 
 		// 没有行棋者 或者 非行棋者发出请求
 		list.push((action : GameAction<any>)=> {
 			let pler = this.playerList[this.turnIndex];
-			if (!pler || !pler.isTurn) { return false;}
+			let flag = pler && pler.isTurn;
+			if(!flag){
+				loger.error(`game::check::ERR NO SUCH PLAYER OR NOT TURN`);
+			}
+			return flag;
 		 });
 
 
@@ -139,6 +148,9 @@ export class Game {
 
 	// 处理游戏操作信息
 	parseAction(action: GameAction<any>): void {
+		console.log(action.actionName);
+		console.log(Object.keys(this.parseActionHandlerList).join('=='));
+
 		let list = this.parseActionHandlerList;
 		let handler = list[action.actionName];
 		if (handler) {

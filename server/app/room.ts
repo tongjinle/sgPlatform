@@ -74,14 +74,15 @@ export class Room {
 		loger.info(`acceptAction::${ro.id}::${playerName}::${actionName}::${JSON.stringify(actionData)}`);
 
 		let checkRet: { flag: boolean, reason: string };
-		let hasErr: boolean = ga.checkAction(action);
+		let flag: boolean = ga.checkAction(action);
 
-		if (!hasErr) {
+		ro.resPlayer(playerName, 'resGameAction', { flag });
+
+		if (flag) {
 			ga.parseAction(action);
 			let resData = { flag: true };
-			ro.notifyAll(ga.updateValueList[ga.updateValueList.length - 1]);
+			ro.notifyAll('notiGameUpdate', ga.updateValueList[ga.updateValueList.length - 1]);
 		}
-		ro.resPlayer(playerName, 'resGameAction', { flag: hasErr });
 	};
 
 	// 反馈action的操作结果给发起action的player
@@ -105,7 +106,7 @@ export class Room {
 
 
 	// 结束
-	end():void{
+	end(): void {
 		// todo
 	}
 }

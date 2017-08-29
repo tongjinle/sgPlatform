@@ -198,3 +198,8 @@ export interface INotifyGameTurn {
     turnIndex: number;
 };
 
+
+// 游戏状态update
+export interface INotifyGameUpdate{
+
+};

@@ -42,6 +42,7 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 
 		this.parseActionHandlerList['gesture'] =
 			(action: GameAction<ITestGameGestureAction>) => {
+				console.log(1232312321);
 				let pler = this.playerList[this.turnIndex];
 				let { gestureName } = action.actionData;
 
@@ -70,11 +71,11 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 	}
 
 	turn(): string {
-		let se = this.seedGenerator;
 		// 清空所有player的isTurn
 		this.playerList.forEach(pler => { pler.isTurn = false; });
 		// 确定当前行动的人
 		if (this.turnIndex == -1) {
+			let se = this.seedGenerator;
 			this.turnIndex = parseInt(this.playerList.length * se() + '');
 		}
 		else {

@@ -7,7 +7,6 @@ import {
 } from '../struct/enums';
 import { Platform } from './platform';
 import { Room } from './Room';
-import { Game } from './game';
 import * as SocketIO from 'socket.io';
 import * as Protocol from '../struct/protocol';
 import loger from './loger';
@@ -140,16 +139,23 @@ export class User {
 			});
 
 			// 游戏操作
-			so.on('reqGameAction', (data: Protocol.IReqGameAction<any>) => { 
-				let { roomId, actionName,actionData } = data;
+			so.on('reqGameAction', (data: Protocol.IReqGameAction<any>) => {
+				let { roomId, actionName, actionData } = data;
+				console.log('***************************');
+				console.log(data);
 				let ro = _.find(pl.roomList, ro => ro.id == roomId);
-
-				let action :GameAction<any> = {
-					playerName:this.userName,
-					actionName,
-					actionData
-				};
-				ro.accpetAction(action);
+				if (ro) {
+					let action: GameAction<any> = {
+						playerName: this.userName,
+						actionName,
+						actionData
+					};
+					ro.accpetAction(action);
+				}
+				else {
+					loger.debug(`roomIdList::${pl.roomList.map(ro=>ro.id).join('\n')}`);
+					loger.error(`game::action::ERR ROOMID::${roomId}`);
+				}
 			});
 
 			// 退出房间

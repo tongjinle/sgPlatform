@@ -78,10 +78,20 @@ export class Platform {
 					let matchedList = list
 						.splice(0, 2)
 						.map(usName => _.find(this.userList, us => us.userName == usName));
+
+					loger.info(`notiMatchGame::${matchedList.map(us => us.userName).join('&')}`);
+
+
 					let ro = new Room(EGameName[name], matchedList);
+					{
+						let notiData: Protocol.INotifyMatchGame = {
+							roomId: ro.id,
+							playerNameList: ro.playerList.map(pler => pler.userName)
+						};
+						this.io.to(ro.id).emit('notiMatchGame', notiData);
+					}
 					this.roomList.push(ro);
 					ro.start();
-					loger.info(`notiMatchGame::${matchedList.map(us=>us.userName).join('&')}`);
 				}
 				// notify user MATCHING
 				list.forEach(usName => {

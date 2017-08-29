@@ -222,6 +222,7 @@ testList.push((cb) => {
 	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
 	let aList = infoList['a'] = [];
 	let bList = infoList['b'] = [];
+	let roomId: string;
 	async.series([
 		cb => {
 			userNameList.forEach(usName => {
@@ -237,8 +238,10 @@ testList.push((cb) => {
 				});
 
 				so.on('notiMatchGame', data => {
-					let { roomId, playerNameList } = data;
+					let { playerNameList } = data;
 					infoList[usName].push({ event: 'notiMatchGame', data });
+					roomId = data.roomId;
+					console.log(`roomId::${roomId}`);
 				});
 
 				so.on('notiGameStart', data => {
@@ -278,7 +281,7 @@ testList.push((cb) => {
 			soList['b'].emit('reqMatchGame', {
 				name: 'TestGame'
 			});
-			setTimeout(cb, 2000);
+			setTimeout(cb, 8000);
 		},
 		cb => {
 			let bHearResMatchGame = infoList['b'].some(n => n.event == 'resMatchGame');
@@ -295,14 +298,11 @@ testList.push((cb) => {
 			console.assert(aHearNotiGameStart && bHearNotiGameStart, 'a & b hear notiGameStart');
 			console.assert(aHearNotiGameTurn && bHearNotiGameTurn, 'a & b hear notiGameTurn, it is [a] turn');
 
-			setTimeout(cb, 2000);
-		},
-		cb => {
-			console.log(JSON.stringify(infoList, null, 4));
 			cb();
 		},
 		cb => {
 			soList['a'].emit('reqGameAction', {
+				roomId,
 				actionName: 'gesture',
 				actionData: { gesture: 'cuizi' }
 			});
@@ -318,6 +318,7 @@ testList.push((cb) => {
 		cb => {
 
 			soList['b'].emit('reqGameAction', {
+				roomId,
 				actionName: 'gesture',
 				actionData: { gesture: 'bu' }
 			});
@@ -326,7 +327,11 @@ testList.push((cb) => {
 		cb => {
 			let aHearNotiGameEnd = infoList['a'].some(n => n.event == 'notiGameEnd' && n.data.result.winner == 'b');
 			let bHearNotiGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd' && n.data.result.winner == 'b');
-			console.assert(aHearNotiGameEnd && bHearNotiGameEnd);
+			console.assert(aHearNotiGameEnd && bHearNotiGameEnd, 'a & b hear notiGameEnd');
+			cb();
+		},
+		cb => {
+			console.log(JSON.stringify(infoList, null, 4));
 			cb();
 		}
 
