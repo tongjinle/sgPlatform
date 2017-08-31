@@ -113,7 +113,7 @@ let filterEvent = (infoList: { [userName: string]: { event: string, data: any }[
 
 let testList = [];
 
-// 测试登陆
+// [1]测试登陆
 testList.push((cb) => {
 	let userNameList = ['a', 'b', 'c'];
 
@@ -162,7 +162,7 @@ testList.push((cb) => {
 	], clear.bind(null, cb));
 });
 
-// 测试聊天
+// [2]测试聊天
 // a,b,c登陆
 // a在世界频道说了hello
 // watcher听到了这句话,b,c也听到了hello这句话
@@ -217,7 +217,7 @@ testList.push((cb) => {
 
 });
 
-// 测试游戏(testGame),test是个石头剪刀布的游戏
+// [3]测试游戏(testGame),test是个石头剪刀布的游戏
 // a,b,c登陆
 // a匹配游戏
 // 等待2秒，在等待的过程中，a收到它所在的某某房间还在等待
@@ -356,46 +356,46 @@ testList.push((cb) => {
 	], clear.bind(null, cb));
 });
 
-// 游戏中登出,等于投降
+// [4]游戏中登出,等于投降
 // a,b登陆
 // a,b匹配游戏,a,b开始游戏
 // a登出
 // b听到自己获胜的信息
-// testList.push(cb => {
-// let userNameList = ['a', 'b'];
-// let infoList: { [userName: string]: { event: string, data: any }[] } = {};
-// let aList: { event: string, data: any }[] = infoList['a'] = [];
-// let bList: { event: string, data: any }[] = infoList['b'] = [];
-// let roomId: string;
-// async.series([
-// 	cb=>{
-// 		userNameList.forEach(usName => {
-// 			let so = soList[usName] = createSocket();
-// 			login(so, usName);
-// 		});
-// 		setTimeout(cb, 2000);
-// 	},
-// 	cb => {
-// 		soList['a'].emit('reqMatchGame', {
-// 			name: 'TestGame'
-// 		});
-// 		soList['b'].emit('reqMatchGame', {
-// 			name: 'TestGame'
-// 		});
-// 		setTimeout(cb, 2000);
-// 	},
-// 	cb=>{
-// 		logout(soList['a']);
-// 		setTimeout(cb, 2000);
-// 	},
-// 	cb=>{
-// 		let bHearGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd' && n.data.winner == 'b');
-// 	}
-// ], clear.bind(null, cb));
-// });
+testList.push(cb => {
+	let userNameList = ['a', 'b'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	let aList: { event: string, data: any }[] = infoList['a'] = [];
+	let bList: { event: string, data: any }[] = infoList['b'] = [];
+	let roomId: string;
+	async.series([
+		cb => {
+			userNameList.forEach(usName => {
+				let so = soList[usName] = createSocket();
+				login(so, usName);
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			soList['a'].emit('reqMatchGame', {
+				name: 'TestGame'
+			});
+			soList['b'].emit('reqMatchGame', {
+				name: 'TestGame'
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			logout(soList['a']);
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let bHearGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd' && n.data.winner == 'b');
+		}
+	], clear.bind(null, cb));
+});
 
 
-// 测试重连
+// [5]测试重连--正常
 // a,b登陆
 // a,b匹配游戏,a,b开始游戏
 // a断线,但是没有超时,超时时间为10秒
@@ -403,103 +403,319 @@ testList.push((cb) => {
 // a重连,game状态改回play
 // a发出action,请求出"锤子"
 // b发出action,请求出"剪刀"
-// testList.push((cb) => {
-// 	let userNameList = ['a', 'b'];
-// 	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
-// 	let aList: { event: string, data: any }[] = infoList['a'] = [];
-// 	let bList: { event: string, data: any }[] = infoList['b'] = [];
-// 	let roomId: string;
-// 	async.series([
-// 		cb => {
-// 			userNameList.forEach(usName => {
-// 				let so = soList[usName] = createSocket();
-// 				login(so, usName);
+testList.push((cb) => {
+	let userNameList = ['a', 'b'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	let aList: { event: string, data: any }[] = infoList['a'] = [];
+	let bList: { event: string, data: any }[] = infoList['b'] = [];
+	let roomId: string;
+	async.series([
+		cb => {
+			userNameList.forEach(usName => {
+				let so = soList[usName] = createSocket();
+				login(so, usName);
 
-// 				so.on('notiRoomStatusChanged', (data) => {
-// 					infoList[usName].push({ event: 'notiGameStatusChanged', data });
-// 				});
+				so.on('notiRoomStatusChanged', (data) => {
+					infoList[usName].push({ event: 'notiGameStatusChanged', data });
+				});
 
-// 				so.on('notiMatchGame',data=>{
-// 					roomId = data.roomId;
-// 				});
-// 			});
-
-
-// 			setTimeout(cb, 2000);
-// 		},
-// 		cb => {
-// 			match(soList['a'], 'TestGame');
-// 			match(soList['b'], 'TestGame');
-// 			setTimeout(cb, 10000);
-// 		},
-// 		cb => {
-// 			soList['a'].disconnect();
-// 			setTimeout(cb, 2000);
-// 		},
-// 		cb => {
-// 			let bHearGameStatusChanged = bList.some(n => n.event == 'notiGameStatusChanged' && n.data.status == 'Pause');
-// 			console.assert(bHearGameStatusChanged, 'b hear gameStatus changed -- Pause');
-// 			cb();
-// 		},
-// 		cb => {
-// 			login(soList['a'], 'a');
-// 			setTimeout(cb, 2000);
-// 		},
-// 		cb=>{},
-// 		cb => {
-// 			let list:{event:string,data:any}[];
-// 			list = filterEvent(infoList, 'a', 'notiGameStatusChanged');
-// 			let aHearGameStatusChanged = list[list.length - 1].data.status == 'Play';
-// 			list = filterEvent(infoList, 'b', 'notiGameStatusChanged');
-// 			let bHearGameStatusChanged = list[list.length - 1].data.status == 'Play';
+				so.on('notiMatchGame', data => {
+					roomId = data.roomId;
+				});
+			});
 
 
-// 			console.assert(aHearGameStatusChanged, 'a hear gameStatus changed -- PLAY');
-// 			console.assert(bHearGameStatusChanged, 'b hear gameStatus changed -- PLAY');
-// 			cb();
-// 		},
-// 		cb=>{
-// 			soList['a'].emit('reqGameAction', {
-// 				roomId,
-// 				actionName: 'gesture',
-// 				actionData: { gestureName: 'cuizi' }
-// 			});
-// 			setTimeout(cb, 2000);
-// 		},
-// 		cb=>{
-// 			soList['b'].emit('reqGameAction', {
-// 				roomId,
-// 				actionName: 'gesture',
-// 				actionData: { gestureName: 'jiandao' }
-// 			});
-// 			setTimeout(cb, 2000);
-// 		}
-// 	], clear.bind(null, cb));
-// });
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			match(soList['a'], 'TestGame');
+			match(soList['b'], 'TestGame');
+			setTimeout(cb, 10000);
+		},
+		cb => {
+			soList['a'].disconnect();
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let bHearGameStatusChanged = bList.some(n => n.event == 'notiGameStatusChanged' && n.data.status == 'Pause');
+			console.assert(bHearGameStatusChanged, 'b hear gameStatus changed -- Pause');
+			cb();
+		},
+		cb => {
+			login(soList['a'], 'a');
+			setTimeout(cb, 2000);
+		},
+		cb => { },
+		cb => {
+			let list: { event: string, data: any }[];
+			list = filterEvent(infoList, 'a', 'notiGameStatusChanged');
+			let aHearGameStatusChanged = list[list.length - 1].data.status == 'Play';
+			list = filterEvent(infoList, 'b', 'notiGameStatusChanged');
+			let bHearGameStatusChanged = list[list.length - 1].data.status == 'Play';
+
+
+			console.assert(aHearGameStatusChanged, 'a hear gameStatus changed -- PLAY');
+			console.assert(bHearGameStatusChanged, 'b hear gameStatus changed -- PLAY');
+			cb();
+		},
+		cb => {
+			soList['a'].emit('reqGameAction', {
+				roomId,
+				actionName: 'gesture',
+				actionData: { gestureName: 'cuizi' }
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			soList['b'].emit('reqGameAction', {
+				roomId,
+				actionName: 'gesture',
+				actionData: { gestureName: 'jiandao' }
+			});
+			setTimeout(cb, 2000);
+		}
+	], clear.bind(null, cb));
+});
 
 
 
-// 测试重连
+// [6]测试重连--超时
 // a,b登陆
 // a,b匹配游戏,a,b开始游戏
 // a断线,并且超时,超时时间为10秒
 // b获得胜利,听到gameEnd的消息
+// a重新登陆后,也听到了这个消息
+testList.push(cb => {
+	let userNameList = ['a', 'b'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	let aList: { event: string, data: any }[] = infoList['a'] = [];
+	let bList: { event: string, data: any }[] = infoList['b'] = [];
+	let roomId: string;
+	async.series([
+		cb => {
+			userNameList.forEach(usName => {
+				let so = soList[usName] = createSocket();
+				login(so, usName);
 
-// 测试重连
+				so.on('notiMatchGame', data => {
+					roomId = data.roomId;
+				});
+			});
+
+			soList['b'].on('notiGameEnd', data => {
+				bList.push({ event: 'notiGameEnd', data });
+			});
+
+
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			userNameList.forEach(usName => {
+				soList[usName].emit('reqMatchGame', { name: 'TestGame' });
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			soList['a'].disconnect();
+			setTimeout(cb, 15000);
+		},
+		cb => {
+			let bHearGameEnd = bList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
+			console.assert(bHearGameEnd, 'b hear gameEnd, b is the winner');
+			cb();
+		},
+		cb => {
+			let so = soList['a'] = createSocket();
+			login(soList['a'], 'a');
+			so.on('notiGameEnd', data => {
+				aList.push({ event: 'notiGameEnd', data });
+			});
+
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let aHearGameEnd = aList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
+			console.assert(aHearGameEnd, 'a hear gameEnd, b is the winner');
+			cb();
+		}
+
+	], clear.bind(null, cb));
+});
+
+
+// [7]测试重连--超过最大重连次数
 // a,b登陆
 // a,b匹配游戏,a,b开始游戏
 // a断线,重连,反复3次,在第四次的时候,系统判断a多次断线而游戏失败
 // b获得胜利,听到gameEnd的消息
+testList.push(cb => {
+	let userNameList = ['a', 'b'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	let aList: { event: string, data: any }[] = infoList['a'] = [];
+	let bList: { event: string, data: any }[] = infoList['b'] = [];
+	let roomId: string;
+	async.series([
+		cb => {
+			userNameList.forEach(usName => {
+				let so = soList[usName] = createSocket();
+				login(so, usName);
 
-// 测试观看
+				so.on('notiMatchGame', data => {
+					roomId = data.roomId;
+				});
+			});
+
+			soList['b'].on('notiGameStatusChanged', data => {
+				bList.push({ event: 'notiGameStatusChanged', data });
+			});
+
+			soList['b'].on('notiGameEnd', data => {
+				bList.push({ event: 'notiGameEnd', data });
+			});
+
+
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			userNameList.forEach(usName => {
+				soList[usName].emit('reqMatchGame', { name: 'TestGame' });
+			});
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let count = 2;
+			let arr = [];
+			while (count--) {
+				arr.push((cb) => {
+					let arr = [
+						cb => {
+							soList['a'].disconnect();
+							setTimeout(cb, 1000);
+						},
+						cb => {
+							login(soList['a'], 'a');
+							setTimeout(cb, 1000);
+						}
+					];
+					async.series(arr, cb);
+				});
+			};
+			async.series(arr, cb => {
+				setTimeout(cb, 2000);
+			});
+		},
+		cb => {
+			let bNotHearGameEnd = !bList.some(n => n.event == 'notiGameEnd');
+			console.assert(bNotHearGameEnd, 'b NOT hear gameEnd');
+		},
+		cb => {
+			soList['a'].disconnect();
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let bHearGameEnd = bList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
+			console.assert(bHearGameEnd, 'b hear gameEnd, b is the winner');
+			cb();
+		},
+		cb => {
+			let so = soList['a'] = createSocket();
+			so.on('notiGameEnd', data => {
+				aList.push({ event: 'notiGameEnd', data });
+			});
+
+			login(soList['a'], 'a');
+			setTimeout(cb, 2000);
+		},
+		cb => {
+			let aHearGameEnd = aList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
+			console.assert(aHearGameEnd, 'a hear gameEnd, b is the winner');
+			cb();
+		}
+
+	], clear.bind(null, cb));
+});
+
+
+// [8]测试观看
 // a,b,c登陆
 // a,b进行游戏,c进入房间,进行了观看
 // c除了不能发送gameAction,可以进行所有的操作
+testList.push(cb => {
+	let userNameList = ['a', 'b','c'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	let aList: { event: string, data: any }[] = infoList['a'] = [];
+	let bList: { event: string, data: any }[] = infoList['b'] = [];
+	let roomId: string;
+	async.series(
+		[
+			cb => {
+				userNameList.forEach(usName => {
+					let so = soList[usName] = createSocket();
+					login(so, usName);
+
+					so.on('notiMatchGame', data => {
+						roomId = data.roomId;
+					});
+				});
+
+				soList['c'].on('notiGameUpdate', data => {
+					bList.push({ event: 'notiGameUpdate', data });
+				});
+
+				soList['c'].on('notiGameLastUpdate', data => {
+					bList.push({ event: 'notiGameLastUpdate', data });
+				});
+
+				
+				soList['c'].on('resWatchGame', data => {
+					bList.push({ event: 'resWatchGame', data });
+				});
+
+
+
+
+				setTimeout(cb, 2000);
+			},
+			cb=>{
+				userNameList.forEach(usName => { 
+					login(soList[usName], usName);
+				});
+				setTimeout(cb, 2000);
+			},
+			cb=>{
+				userNameList.forEach(usName => {
+					soList[usName].emit('reqMatchGame', { name: 'TestGame' });
+				});
+				setTimeout(cb, 2000);
+			},
+			cb=>{
+				soList['c'].emit('reqWatchGame', {roomId });
+				setTimeout(cb, 2000);
+			},
+			cb=>{
+				let cHearResWatchGame = infoList['c'].some(n => n.event == 'resWatchGame');
+				let cHearNotiGameLastUpdate = infoList['c'].some(n => n.event == 'notiGameLastUpdate');
+				console.assert(cHearResWatchGame, 'c hear resWatchGame');
+				console.assert(cHearNotiGameLastUpdate, 'c hear notiGameLastUpdate');
+				cb();
+			},
+			cb=>{
+				logout(soList['a']);
+				setTimeout(cb, 2000);
+			}
+		],
+
+		clear.bind(null, cb)
+	);
+
+});
+
 
 createWatcher();
 setTimeout(() => {
 	let list = testList;
 	// list = [testList[testList.length - 1]];
+	list = list.slice(0, 3);
 	async.eachSeries(list, (te, cb) => te(cb), () => {
 		console.log('test complete');
 	});
