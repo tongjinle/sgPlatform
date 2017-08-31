@@ -218,7 +218,6 @@ export class User {
 		if (EUserStatus.Online == this.status) {
 			this.leaveAllRooms();
 			this.status = EUserStatus.Offline;
-			pl.userList = _.without(pl.userList, this);
 
 			flag = true;
 			let resData: Protocol.IResLogoutData = { flag };
@@ -227,6 +226,8 @@ export class User {
 				let notiData: Protocol.INotifyLogoutData = { userName: this.userName };
 				pl.broadcast('notiLogout', notiData);
 				so.disconnect();
+
+				pl.afterUserLogout(this);
 			}
 			loger.info(`logout::${this.userName}::${flag}`);
 		}
@@ -361,7 +362,7 @@ export class User {
 
 
 				// 清理
-				pl.clear(this);
+				pl.afterUserDisconnect(this);
 			}
 		});
 

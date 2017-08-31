@@ -1,23 +1,23 @@
-import { Game, GameAction } from '../game';
+import { Game, GameAction,IGameResult } from '../game';
 import { Player } from '../user/player';
 import * as _ from 'underscore';
 import loger from '../loger';
 import * as Protocol from '../../struct/protocol';
 
 // gesture data struct
-export interface ITestGameGestureAction {
+export interface ITestGameGestureAction extends IGameResult {
 	gestureName: string;
 };
 
 // gameEnd data struct
-export interface ITestGameEnd{
+export interface ITestGameResult {
 	winner: string;
 };
 
 export class TestGame extends Game {
 	private gestureMap: { playerName: string, gestureName: string }[];
 	private winner: Player;
-private	static  gestureList = ['bu', 'jiandao','cuizi' ];
+	private static gestureList = ['bu', 'jiandao', 'cuizi'];
 
 	constructor() {
 		super();
@@ -63,17 +63,13 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 				let map = this.gestureMap;
 				map.push({ playerName: pler.userName, gestureName });
 
-				if(map.length==2){
+				if (map.length == 2) {
 					this.calResult();
-					if(this.winner){
+					if (this.winner) {
 						let ro = this.room;
-						let notiData: Protocol.INotifyGameEnd<ITestGameEnd> = {
-							roomId: ro.id,
-							data: {
-								winner: this.winner.userName
-							}
-						};
-						ro.end(notiData);
+						let gaResult: ITestGameResult = { winner: this.winner.userName };
+						this.result = gaResult;
+						this.end();
 						return;
 					}
 				}
@@ -81,7 +77,7 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 				// 如果游戏没有结束,就继续切换下一个行棋者
 				this.notifyTurn();
 			};
-	}
+	};
 
 	turn(): string {
 		// 清空所有player的isTurn
@@ -99,15 +95,15 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 
 		this.playerList[this.turnIndex].isTurn = true;
 		return this.playerList[this.turnIndex].userName;
-	}
+	};
 
 
 	private calResult(): void {
 		let map = this.gestureMap;
 		let geList = TestGame.gestureList;
 
-		let arr:any[] = [{},{}];
-		arr.forEach((n,i) => { 
+		let arr: any[] = [{}, {}];
+		arr.forEach((n, i) => {
 			n.code = geList.indexOf(map[i].gestureName);
 		});
 
@@ -120,11 +116,25 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 		else if (arr[0].code == 2 && arr[1].code == 0) {
 			winnerIndex = 1;
 		}
-		else{
+		else {
 			let sub = arr[0].code - arr[1].code;
 			winnerIndex = sub == 0 ? -1 : sub > 0 ? 0 : 1;
 		}
 		console.log(winnerIndex);
 		this.winner = winnerIndex == 0 ? undefined : this.playerList[winnerIndex];
+	};
+
+	afterPlayerLogout(playerName: string): void {
+		// for temp debug
+		// loger.debug(JSON.stringify(this.playerList, null, 4));
+		// loger.debug(playerName);
+
+		// 游戏结束,让另一个人获胜
+		let pler = _.find(this.playerList, pler => {return pler.userName != playerName });
+		this.winner = pler;
+
+		this.result =  { winner: this.winner.userName };
+		this.end();
+
 	}
 }

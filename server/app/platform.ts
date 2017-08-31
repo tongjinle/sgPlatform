@@ -2,7 +2,8 @@ import * as Http from 'http';
 import {
 	EPlatformStatus,
 	EGameName,
-	EGameInfoType
+	EGameInfoType,
+	EGameStatus
 } from '../struct/enums';
 import { User } from './user';
 import { Player } from './user/player';
@@ -73,6 +74,8 @@ export class Platform {
 	private loopMatchGame(): void {
 		setInterval(() => {
 			let ts = Date.now();
+			// loger.debug('loopMatchGame');
+			// loger.debug(JSON.stringify(this.matchingList, null, 4));
 			_.each(this.matchingList, (list, name) => {
 				while (list.length >= 2) {
 					let matchedList = list
@@ -106,17 +109,45 @@ export class Platform {
 		}, 5000);
 	}
 
-	clear(user: User): void {
+	afterUserDisconnect(user: User): void {
 		// 将掉线的user从matchingList中移除
 		{
-			let map = this.matchingList;
-			_.each(map, (list, gameName) => {
-				list = list.filter(usName => usName != user.userName);
-			});
+			this.clearMatchingList(user);
+			loger.debug('afterUserDisconnect');
+			loger.debug(JSON.stringify(this.matchingList, null, 4));
 		}
+	}
+
+
+	afterUserLogout(user: User) {
+		this.userList = _.without(this.userList, user);
+
+		// 清理matchingList
+		this.clearMatchingList(user);
 		// 如果有人退出,则要把游戏自动结束,认为这样是一种投降
 		// todo
+		// 查找user所在的所有房间,且游戏的状态为'进行中'
+		this.roomList.forEach(ro => {
+			let ga = ro.game;
+			if (ga && ga.status == EGameStatus.Play && ro.playerList.indexOf(user) >= 0) {
+				ga.pause();
+				ga.afterPlayerLogout(user.userName);
+			}
+		});
 	}
+
+
+	// 清理matchingList
+	private clearMatchingList(user: User): void {
+		let map = this.matchingList;
+		_.each(map, (list, gameName) => {
+			list = list.filter(usName => usName != user.userName);
+		});
+	}
+
+
+
+
 
 	private static plSingle: Platform;
 	static getInstance(): Platform {

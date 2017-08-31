@@ -360,7 +360,8 @@ testList.push((cb) => {
 // a,b登陆
 // a,b匹配游戏,a,b开始游戏
 // a登出
-// b听到自己获胜的信息
+// b听到游戏被pause
+// b听到游戏结束,b是胜利者
 testList.push(cb => {
 	let userNameList = ['a', 'b'];
 	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
@@ -374,6 +375,15 @@ testList.push(cb => {
 				login(so, usName);
 			});
 			setTimeout(cb, 2000);
+
+			soList['b'].on('notiGameStatusChanged', data => {
+				bList.push({ event: 'notiGameStatusChanged', data })
+			});
+
+
+			soList['b'].on('notiGameEnd', data => {
+				bList.push({ event: 'notiGameEnd', data })
+			});
 		},
 		cb => {
 			soList['a'].emit('reqMatchGame', {
@@ -389,7 +399,10 @@ testList.push(cb => {
 			setTimeout(cb, 2000);
 		},
 		cb => {
-			let bHearGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd' && n.data.winner == 'b');
+			let bHearGameEnd = infoList['b'].some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');\
+			console.assert(bHearGameEnd, 'b hear gameEnd, b is the winner');
+			console.log(JSON.stringify(bList, null, 4));
+			cb();
 		}
 	], clear.bind(null, cb));
 });
@@ -713,9 +726,10 @@ testList.push(cb => {
 
 createWatcher();
 setTimeout(() => {
+	let index = 3;
 	let list = testList;
-	// list = [testList[testList.length - 1]];
-	list = list.slice(0, 3);
+	list = [testList[index]];
+	// list = list.slice(0, index+1);
 	async.eachSeries(list, (te, cb) => te(cb), () => {
 		console.log('test complete');
 	});

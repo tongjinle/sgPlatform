@@ -7,7 +7,7 @@ import * as Protocol from '../struct/protocol';
 import * as SRnd from 'seedrandom';
 
 export interface IGameResult {
-	winer: string;
+
 };
 
 export class GameAction<T> {
@@ -76,21 +76,21 @@ export class Game {
 		// 游戏不在play的状态
 		list.push((action: GameAction<any>) => {
 			let flag = this.status == EGameStatus.Play;
-			if(!flag){
+			if (!flag) {
 				loger.error(`game::check::ERR NOT PLAY STATUS`);
 			}
 			return flag;
 		});
 
 		// 没有行棋者 或者 非行棋者发出请求
-		list.push((action : GameAction<any>)=> {
+		list.push((action: GameAction<any>) => {
 			let pler = this.playerList[this.turnIndex];
 			let flag = pler && pler.isTurn;
-			if(!flag){
+			if (!flag) {
 				loger.error(`game::check::ERR NO SUCH PLAYER OR NOT TURN`);
 			}
 			return flag;
-		 });
+		});
 
 
 	}
@@ -162,15 +162,40 @@ export class Game {
 	// 暂停游戏
 	pause(): void {
 		this.status = EGameStatus.Pause;
+		this.notifyStatusChanged();
 	};
 
 
 	// 结束游戏
 	end(): void {
 		this.status = EGameStatus.End;
+		this.notifyStatusChanged();
+
+		// 通知游戏结果
+		{
+			let ro = this.room;
+			let notiData: Protocol.INotifyGameEnd<IGameResult> = {
+				roomId: ro.id,
+				data: this.result
+			};
+			loger.debug(JSON.stringify(notiData, null, 4));
+			this.room.notifyAll('notiGameEnd', notiData);
+		}
+
 	};
 
+	// 当玩家logout的时候
+	// 需要具体的游戏去重写这个方法
+	afterPlayerLogout(playerName: string): void { };
 
+	private notifyStatusChanged() {
+		let ro = this.room;
+		let data: Protocol.INotifyGameStatusChanged;
+		data = {
+			status: this.status
+		};
+		ro.notifyAll('notiGameStatusChanged', data);
+	}
 
 
 }
