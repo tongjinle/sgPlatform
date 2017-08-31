@@ -69,12 +69,11 @@ private	static  gestureList = ['bu', 'jiandao','cuizi' ];
 						let ro = this.room;
 						let notiData: Protocol.INotifyGameEnd<ITestGameEnd> = {
 							roomId: ro.id,
-							result: {
+							data: {
 								winner: this.winner.userName
 							}
 						};
-						ro.notifyAll('notiGameEnd', notiData);
-						ro.end();
+						ro.end(notiData);
 						return;
 					}
 				}

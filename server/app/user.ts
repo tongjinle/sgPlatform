@@ -182,7 +182,6 @@ export class User {
 		// 数据库密码
 		let flag = true;
 		this.userName = userName;
-		this.joinPlatform();
 		this.status = EUserStatus.Online;
 
 
@@ -198,12 +197,15 @@ export class User {
 			// 查看是否是重连
 			if (pl.holdList.some(ho => ho.userName == userName)) {
 				pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
+				pl.userList = _.without(pl.userList, _.find(pl.userList, pler => pler.userName == userName && pler.status == EUserStatus.Offline));
 				loger.info(`reconnect::${userName}`);
 				this.reconnect();
 			}
 		}
 
 		loger.info(`login::${userName}::${flag}`);
+
+		// loger.debug(pl.userList.map(us => us.userName+'::'+us.status).join('\n'));
 	}
 
 

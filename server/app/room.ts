@@ -52,6 +52,8 @@ export class Room {
 		let ga = this.game;
 		if (ga) {
 			ga.start();
+		} else {
+			loger.error(`room::${this.id}::ERR NO GAME`);
 		}
 	}
 
@@ -106,7 +108,8 @@ export class Room {
 
 
 	// 结束
-	end(): void {
-		// todo
+	end(data: Protocol.INotifyGameEnd<any>): void {
+		this.game.end();
+		this.notifyAll('notiGameEnd', data);
 	}
 }

@@ -70,6 +70,11 @@ export interface INotifyLeaveRoomData {
     userName: string;
 };
 
+// 房间状态改变
+export interface INotifyGameStatusChanged{
+    status:EGameStatus
+};
+
 
 // 聊天
 export interface IReqChat {
@@ -179,7 +184,7 @@ export interface INotifyGameStart {
 // 游戏结束
 export interface INotifyGameEnd<T>{
     roomId: string;
-    result: T;
+    data: T;
 };
 
 // 回合切换
