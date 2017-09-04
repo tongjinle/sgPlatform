@@ -104,6 +104,8 @@ export class Room {
 		let pl = Platform.getInstance();
 		let io = pl.io;
 		io.to(this.id).emit(event, ...args);
+
+		loger.info(`room::notifyAll::${event}`);
 	}
 
 

@@ -183,24 +183,18 @@ export class User {
 		let flag = true;
 		this.userName = userName;
 		this.status = EUserStatus.Online;
+		this.joinPlatform();
 
 
 		let resData: Protocol.IResLoginData = { flag };
 		so.emit('resLogin', resData);
 		if (flag) {
-			this.status = EUserStatus.Online;
-			this.joinPlatform();
+
+			pl.afterUserLogin(this);
 
 			let notiData: Protocol.INotifyLoginData = { userName };
 			pl.broadcast('notiLogin', notiData);
 
-			// 查看是否是重连
-			if (pl.holdList.some(ho => ho.userName == userName)) {
-				pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
-				pl.userList = _.without(pl.userList, _.find(pl.userList, pler => pler.userName == userName && pler.status == EUserStatus.Offline));
-				loger.info(`reconnect::${userName}`);
-				this.reconnect();
-			}
 		}
 
 		loger.info(`login::${userName}::${flag}`);
@@ -386,6 +380,9 @@ export class User {
 
 
 	// 重连
-	reconnect(): void { }
+	reconnect(): void {
+		let pl = this.platform;
+		pl.afterUserReconnect(this);
+	 }
 }
 

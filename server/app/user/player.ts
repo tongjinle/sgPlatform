@@ -3,7 +3,6 @@ import { Game } from '../game';
 
 export class Player {
 	userName: string;
-	gameStatus: EGameStatus;
 	// 上一次动作时间,包括所有动作
 	lastActionTs: number;
 	// 断线时间戳
@@ -12,6 +11,8 @@ export class Player {
 	offlineCount: number;
 	// 是否是我的回合
 	isTurn: boolean;
+	// 是否掉线
+	isOffline:boolean;
 	// 游戏实例
 	game: Game;
 
