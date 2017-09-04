@@ -1,30 +1,37 @@
 import { EGameStatus } from '../../struct/enums';
 import { Game, GameAction, IGameResult } from '../game';
+import {LimitGame} from '../LimitGame';
 import { Player } from '../user/player';
 import * as _ from 'underscore';
 import loger from '../loger';
 import * as Protocol from '../../struct/protocol';
+import IGameTimeLimit from '../iGameTimeLimit';
+import {judge} from '../afterTimeout/simple';
 
 // gesture data struct
-export interface ITestGameGestureAction extends IGameResult {
+export interface ITestGameGestureAction  {
     gestureName: string;
 };
 
 // gameEnd data struct
-export interface ITestGameResult {
+export interface ITestGameResult extends IGameResult{
     winner: string;
 };
 
-export class TestGame extends Game {
+export class TestGame extends LimitGame {
     private gestureMap: { playerName: string, gestureName: string }[];
     private winner: Player;
     private static gestureList = ['bu', 'jiandao', 'cuizi'];
+
+   
 
     constructor() {
         super();
 
         this.gestureMap = [];
         this.winner = undefined;
+
+        this.timeLimit = 10 * 1000;
 
         // gesture
         this.checkActionHandlerList.push(
@@ -78,6 +85,17 @@ export class TestGame extends Game {
                 // 如果游戏没有结束,就继续切换下一个行棋者
                 this.notifyTurn();
             };
+    };
+
+    afterTimeout():void{
+    	let winner = judge(this);
+    	if(winner){
+    		this.winner = winner;
+    		this.result = {
+    			winner:this.winner.userName
+    		};
+    		this.end();
+    	}
     };
 
     turn(): string {
@@ -140,7 +158,16 @@ export class TestGame extends Game {
     };
 
     afterPlayerDisconnect(playerName: string) {
+    	super.afterPlayerDisconnect(playerName);
 
+        let pler = _.find(this.playerList, pler => pler.userName == playerName);
+        if (pler) {
+            pler.offlineCount++;
+            pler.offlineTs = Date.now();
+        }
+
+        // 检测是否超出重连次数
+        // todo
     };
 
     afterPlayerReconnect(playerName: string) {

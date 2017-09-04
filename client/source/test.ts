@@ -538,7 +538,7 @@ testList.push(cb => {
             userNameList.forEach(usName => {
                 soList[usName].emit('reqMatchGame', { name: 'TestGame' });
             });
-            setTimeout(cb, 2000);
+            setTimeout(cb, 8000);
         },
         cb => {
             soList['a'].disconnect();
@@ -549,18 +549,18 @@ testList.push(cb => {
             console.assert(bHearGameEnd, 'b hear gameEnd, b is the winner');
             cb();
         },
-        cb => {
-            let so = soList['a'] = createSocket();
-            login(soList['a'], 'a');
-            so.on('notiGameEnd', data => {
-                aList.push({ event: 'notiGameEnd', data });
-            });
+        // 以后改成邮件通知吧
+        // cb => {
+        //     let so = soList['a'] = createSocket();
+        //     login(soList['a'], 'a');
+        //     so.on('notiGameEnd', data => {
+        //         aList.push({ event: 'notiGameEnd', data });
+        //     });
 
-            setTimeout(cb, 2000);
-        },
+        //     setTimeout(cb, 2000);
+        // },
         cb => {
-            let aHearGameEnd = aList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
-            console.assert(aHearGameEnd, 'a hear gameEnd, b is the winner');
+            console.log(JSON.stringify(infoList,null,4));
             cb();
         }
 
@@ -739,12 +739,12 @@ testList.push(cb => {
 createWatcher();
 setTimeout(() => {
     let list = testList;
-    
-    let index = 4;
+
+    let index = 5;
     list = list.slice(0, index + 1);
     // list = [testList[index]];
 
-    // list = [testList[2]];
+    // list = [testList[4]];
 
     let n = 0;
     async.eachSeries(list,

@@ -10,10 +10,13 @@ import { User } from './user';
 import { Player } from './user/player';
 import { Watcher } from './user/watcher';
 import { Room } from './room';
+import { Game } from './game';
+import { LimitGame } from './LimitGame';
 import * as SocketIO from 'socket.io';
 import loger from './loger';
 import * as _ from 'underscore';
 import * as Protocol from '../struct/protocol';
+import IGameTimeLimit from './iGameTimeLimit';
 
 
 export class Platform {
@@ -42,6 +45,7 @@ export class Platform {
         this.listen();
         this.loopHoldList();
         this.loopMatchGame();
+        this.loopCheckGameTimeout();
 
     }
 
@@ -116,7 +120,30 @@ export class Platform {
             });
             // console.log(JSON.stringify(this.matchingList, null, 4));
         }, 5000);
-    }
+    };
+
+
+    // 检测超时没有重连的游戏
+    private loopCheckGameTimeout(): void {
+        setInterval(() => {
+            let ts = Date.now();
+            this.roomList.forEach(ro => {
+                let ga = ro.game;
+                let liGame: LimitGame = ga as LimitGame;
+
+
+                if (ga && ga.status == EGameStatus.Pause && liGame.timeLimit !== undefined) {
+                    let playerList = ga.playerList;
+
+                    // 有一个人超时
+                    if (playerList.some(pler =>pler.isOffline && ts - pler.offlineTs >= liGame.timeLimit)) {
+                    	loger.debug(JSON.stringify(playerList,null,4));
+                        liGame.afterTimeout();
+                    }
+                }
+            });
+        }, 2000);
+    };
 
     afterUserLogin(user: User): void {
         let pl = this;
@@ -144,8 +171,8 @@ export class Platform {
         }
 
 
-        loger.debug('before');
-        loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
+        // loger.debug('before');
+        // loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
 
         {
 
@@ -158,8 +185,8 @@ export class Platform {
             }
         }
 
-        loger.debug('after');
-        loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
+        // loger.debug('after');
+        // loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
 
     };
 
@@ -186,13 +213,13 @@ export class Platform {
 
 
     afterUserLogout(user: User) {
-        loger.debug('before user logout');
-        loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
+        // loger.debug('before user logout');
+        // loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
 
         this.userList = _.without(this.userList, user);
 
-        loger.debug('after user logout');
-        loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
+        // loger.debug('after user logout');
+        // loger.debug(this.userList.map(us => us.userName + ':' + us.status).join('\n'));
 
         // 清理matchingList
         this.clearMatchingList(user);
@@ -203,7 +230,6 @@ export class Platform {
         console.log('roList len:', roList.length);
         console.log(this.roomList.map(ro => { return { id: ro.id, status: ro.game.status } }));
         this.getPlayRoom(user).forEach(ro => {
-            console.log(12312312312313);
             let ga = ro.game;
             ga.pause();
             ga.afterPlayerLogout(user.userName);
@@ -212,9 +238,12 @@ export class Platform {
     };
 
     afterUserReconnect(user: User) {
+    	console.log(1234561);
         let pl = this;
         let userName = user.userName;
-        
+
+
+
         // 维护room中的user
         {
             this.roomList.forEach(ro => {
