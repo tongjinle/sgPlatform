@@ -9,12 +9,16 @@ import * as SRnd from 'seedrandom';
 export interface IGameResult {
 
 };
+export interface IGameUpdate {
+    index: number;
+};
 
 export class GameAction<T> {
     playerName: string;
     actionName: string;
     actionData: T;
 };
+
 
 export class Game {
     // 编号
@@ -42,7 +46,7 @@ export class Game {
     // '真实'操作列表
     realActionList: GameAction<any>[];
     // 状态更新列表
-    updateValueList: any[];
+    updateList: any[];
     // 是否是复盘状态
     isReplay: boolean;
 
@@ -62,7 +66,7 @@ export class Game {
         this.playerList = [];
         this.checkActionHandlerList = [];
         this.parseActionHandlerList = {};
-        this.updateValueList = [];
+        this.updateList = [];
         this.status = EGameStatus.Prepare;
         this.turnIndex = -1;
 
@@ -98,10 +102,10 @@ export class Game {
     // 开始游戏
     start(): void {
         this.status = EGameStatus.Play;
-        this.playerList.forEach(pler=>{
-        	pler.isOffline = false;
+        this.playerList.forEach(pler => {
+            pler.isOffline = false;
         });
-        
+
         let ro = this.room;
         let notiData: Protocol.INotifyGameStart = {
             roomId: ro.id,
@@ -175,6 +179,16 @@ export class Game {
         this.notifyStatusChanged();
     };
 
+    // 发送游戏更新
+    notiLastUpdate(): void {
+        if (this.updateList.length) {
+
+            let lastUpdate = this.updateList[this.updateList.length - 1];
+            let ro = this.room;
+            ro.notifyAll('notiGameLastUpdate', lastUpdate);
+        }
+    };
+
 
     // 结束游戏
     end(): void {
@@ -196,13 +210,13 @@ export class Game {
 
     // 当玩家掉线的时候
     // 需要具体的游戏去重写这个方法
-    afterPlayerDisconnect(playerName: string): void { 
-    	let pler =_.find( this.playerList,pler=>pler.userName==playerName);
-    	if(pler){
-    		pler.isOffline=true;
-    		pler.offlineCount++;
+    afterPlayerDisconnect(playerName: string): void {
+        let pler = _.find(this.playerList, pler => pler.userName == playerName);
+        if (pler) {
+            pler.isOffline = true;
+            pler.offlineCount++;
             pler.offlineTs = Date.now();
-    	}
+        }
     };
 
     // 当玩家logout的时候

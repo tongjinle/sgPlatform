@@ -16,7 +16,7 @@ import * as SocketIO from 'socket.io';
 import loger from './loger';
 import * as _ from 'underscore';
 import * as Protocol from '../struct/protocol';
-import {ILimitGame} from './iLimitGame';
+import { ILimitGame } from './iLimitGame';
 
 
 export class Platform {
@@ -136,8 +136,8 @@ export class Platform {
                     let playerList = ga.playerList;
 
                     // 有一个人超时
-                    if (playerList.some(pler =>pler.isOffline && ts - pler.offlineTs >= liGame.timeLimit)) {
-                    	loger.debug(JSON.stringify(playerList,null,4));
+                    if (playerList.some(pler => pler.isOffline && ts - pler.offlineTs >= liGame.timeLimit)) {
+                        loger.debug(JSON.stringify(playerList, null, 4));
                         liGame.afterTimeout();
                     }
                 }
@@ -159,14 +159,18 @@ export class Platform {
 
         // 维护room中的user
         {
-            this.roomList.forEach(ro => {
-                let list = ro.playerList;
-                let removeUser = _.find(list, us => us.userName == userName);
-                if (removeUser) {
-                    ro.playerList = _.without(ro.playerList, removeUser);
-                    ro.playerList.push(user);
+            let clear = (list: User[], user: User) => {
+                for (let i = 0; i < list.length; i++) {
+                    let us = list[i];
+                    if (us.userName == userName) {
+                        list.splice(i, 1);
+                        break;
+                    }
                 }
-
+            };
+            this.roomList.forEach(ro => {
+                clear(ro.playerList, user);
+                clear(ro.watcherList, user);
             });
         }
 
@@ -259,7 +263,7 @@ export class Platform {
     private clearMatchingList(user: User): void {
         let map = this.matchingList;
         _.each(map, (list, gameName) => {
-            list = list.filter(usName => usName != user.userName);
+            this.matchingList[gameName] = list.filter(usName => usName != user.userName);
         });
     };
 

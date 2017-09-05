@@ -205,6 +205,39 @@ export interface INotifyGameTurn {
 
 
 // 游戏状态update
-export interface INotifyGameUpdate{
-
+export interface INotifyGameLastUpdate<T>{
+    roomId:string;
+    data:T;
 };
+
+
+// 加入观看
+export interface IReqWatchGame{
+    roomId:string;
+};
+
+export interface IResWatchGame{
+    flag:boolean;
+};
+
+// 退出观看
+export interface IReqUnwatchGame{
+    roomId:string;
+};
+
+export interface IResUnwatchGame{
+    flag:boolean;
+};
+
+
+
+
+
+
+
+
+
+
+
+
+

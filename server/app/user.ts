@@ -45,8 +45,9 @@ export class User {
 				'reqGameAction',
 				'reqJoinRoom',
 				'reqLeaveRoom',
-				'reqWatchRoom',
-				'reqUnWatchRoom'
+				'reqWatchGame',
+				'reqUnwatchGame'
+
 			].forEach(eventName => {
 				so.removeAllListeners(eventName);
 			});
@@ -153,12 +154,23 @@ export class User {
 					ro.accpetAction(action);
 				}
 				else {
-					loger.debug(`roomIdList::${pl.roomList.map(ro=>ro.id).join('\n')}`);
+					loger.debug(`roomIdList::${pl.roomList.map(ro => ro.id).join('\n')}`);
 					loger.error(`game::action::ERR ROOMID::${roomId}`);
 				}
 			});
 
-			// 退出房间
+
+			// 观看游戏
+			so.on('reqWatchGame', (data: Protocol.IReqWatchGame) => {
+				let { roomId } = data;
+				this.watchGame(roomId);
+			});
+
+			// 退出观看游戏
+			so.on('reqUnwatchGame', (data: Protocol.IReqUnwatchGame) => {
+				let { roomId } = data;
+				this.unwatchGame(roomId);
+			});
 
 		}
 	}
@@ -324,14 +336,46 @@ export class User {
 
 
 	// 观战
-	watchRoom(roomId: string) {
+	watchGame(roomId: string) {
+		let pl = this.platform;
+		let ro = _.find(pl.roomList, ro => ro.id == roomId);
+		let flag: boolean = ro &&
+			ro.canWatch &&
+			!ro.watcherList.some(wa => wa == this) &&
+			!ro.playerList.some(pler => pler == this)
+			;
+		if (flag) {
+			ro.addWatcher(this);
+		}
 
-	}
+		let resData: Protocol.IResWatchGame = { flag };
+		if (ro) {
+			console.log(123123);
+			ro.resWatcher(this.userName, 'resWatchGame', resData);
+		}
+
+		loger.info(`user::watchGame::${roomId}::${flag}`);
+	};
 
 	// 离开观战
-	unwatchRoom(roomId: string) {
+	unwatchGame(roomId: string) {
 
-	}
+		let pl = this.platform;
+		let ro = _.find(pl.roomList, ro => ro.id == roomId);
+		let flag: boolean = ro && ro.watcherList.some(wa => wa == this);
+		if (flag) {
+			ro.removeWatcher(this);
+		}
+
+		let resData: Protocol.IResUnwatchGame = { flag };
+
+		if (ro) {
+			ro.resWatcher(this.userName, 'resUnwatchGame', resData);
+		}
+
+		loger.info(`user::unwatchGame::${roomId}::${flag}`);
+
+	};
 
 
 	private listen(): void {
@@ -383,6 +427,6 @@ export class User {
 	reconnect(): void {
 		let pl = this.platform;
 		pl.afterUserReconnect(this);
-	 }
+	}
 }
 

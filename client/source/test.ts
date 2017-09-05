@@ -681,6 +681,7 @@ testList.push(cb => {
     let infoList: { [userName: string]: { event: string, data: any }[] } = {};
     let aList: { event: string, data: any }[] = infoList['a'] = [];
     let bList: { event: string, data: any }[] = infoList['b'] = [];
+    let cList: { event: string, data: any }[] = infoList['c'] = [];
     let roomId: string;
     async.series(
         [
@@ -695,16 +696,16 @@ testList.push(cb => {
                 });
 
                 soList['c'].on('notiGameUpdate', data => {
-                    bList.push({ event: 'notiGameUpdate', data });
+                    cList.push({ event: 'notiGameUpdate', data });
                 });
 
                 soList['c'].on('notiGameLastUpdate', data => {
-                    bList.push({ event: 'notiGameLastUpdate', data });
+                    cList.push({ event: 'notiGameLastUpdate', data });
                 });
 
 
                 soList['c'].on('resWatchGame', data => {
-                    bList.push({ event: 'resWatchGame', data });
+                    cList.push({ event: 'resWatchGame', data });
                 });
 
 
@@ -713,16 +714,16 @@ testList.push(cb => {
                 setTimeout(cb, 2000);
             },
             cb => {
-                userNameList.forEach(usName => {
+                userNameList.slice(0,2).forEach(usName => {
                     login(soList[usName], usName);
                 });
                 setTimeout(cb, 2000);
             },
             cb => {
-                userNameList.forEach(usName => {
+                userNameList.slice(0,2).forEach(usName => {
                     soList[usName].emit('reqMatchGame', { name: 'TestGame' });
                 });
-                setTimeout(cb, 2000);
+                setTimeout(cb, 10000);
             },
             cb => {
                 soList['c'].emit('reqWatchGame', { roomId });
@@ -732,7 +733,20 @@ testList.push(cb => {
                 let cHearResWatchGame = infoList['c'].some(n => n.event == 'resWatchGame');
                 let cHearNotiGameLastUpdate = infoList['c'].some(n => n.event == 'notiGameLastUpdate');
                 console.assert(cHearResWatchGame, 'c hear resWatchGame');
-                console.assert(cHearNotiGameLastUpdate, 'c hear notiGameLastUpdate');
+                console.assert(!cHearNotiGameLastUpdate, 'c NOT hear notiGameLastUpdate');
+                cb();
+            },
+            cb=>{
+                soList['a'].emit('reqGameAction',{
+                    roomId,
+                    actionName:'gesture',
+                    actionData:{'gestureName':'bu'}
+                });
+                setTimeout(cb,1000);
+            },
+            cb=>{
+                let cHearGameLastUpdate = infoList['c'].some(n=>n.event == 'notiGameLastUpdate');
+                console.assert(cHearGameLastUpdate,'c hear notiGameLastUpdate');
                 cb();
             },
             cb => {
@@ -751,7 +765,7 @@ createWatcher();
 setTimeout(() => {
     let list = testList;
 
-    let index = 6;
+    let index = 7;
     list = list.slice(0, index + 1);
     // list = [testList[index]];
 

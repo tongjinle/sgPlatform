@@ -1,5 +1,5 @@
 import { EGameStatus } from '../../struct/enums';
-import { Game, GameAction, IGameResult } from '../game';
+import { Game, GameAction, IGameResult,IGameUpdate } from '../game';
 import {LimitGame} from '../LimitGame';
 import { Player } from '../user/player';
 import * as _ from 'underscore';
@@ -16,6 +16,11 @@ export interface ITestGameGestureAction  {
 // gameEnd data struct
 export interface ITestGameResult extends IGameResult{
     winner: string;
+};
+
+export interface ITestGameGameUpdate extends IGameUpdate{
+	playerName:string;
+	gestureName:string;
 };
 
 export class TestGame extends LimitGame {
@@ -71,6 +76,17 @@ export class TestGame extends LimitGame {
 
                 let map = this.gestureMap;
                 map.push({ playerName: pler.userName, gestureName });
+
+                {
+                	let data:ITestGameGameUpdate ={
+                		index:this.updateList.length,
+                		playerName:pler.userName,
+                		gestureName
+
+                	};
+                	this.updateList.push(data);
+                	this.notiLastUpdate();
+                }
 
                 if (map.length == 2) {
                     this.calResult();
