@@ -5,7 +5,7 @@ import { Player } from '../user/player';
 import * as _ from 'underscore';
 import loger from '../loger';
 import * as Protocol from '../../struct/protocol';
-import IGameTimeLimit from '../iGameTimeLimit';
+import {ILimitGame} from '../iLimitGame';
 import {judge} from '../afterTimeout/simple';
 
 // gesture data struct
@@ -32,6 +32,7 @@ export class TestGame extends LimitGame {
         this.winner = undefined;
 
         this.timeLimit = 10 * 1000;
+        this.countLimit = 3;
 
         // gesture
         this.checkActionHandlerList.push(
@@ -162,8 +163,6 @@ export class TestGame extends LimitGame {
 
         let pler = _.find(this.playerList, pler => pler.userName == playerName);
         if (pler) {
-            pler.offlineCount++;
-            pler.offlineTs = Date.now();
         }
 
         // 检测是否超出重连次数

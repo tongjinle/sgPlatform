@@ -16,7 +16,7 @@ import * as SocketIO from 'socket.io';
 import loger from './loger';
 import * as _ from 'underscore';
 import * as Protocol from '../struct/protocol';
-import IGameTimeLimit from './iGameTimeLimit';
+import {ILimitGame} from './iLimitGame';
 
 
 export class Platform {
@@ -238,7 +238,6 @@ export class Platform {
     };
 
     afterUserReconnect(user: User) {
-    	console.log(1234561);
         let pl = this;
         let userName = user.userName;
 

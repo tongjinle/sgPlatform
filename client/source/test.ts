@@ -605,7 +605,7 @@ testList.push(cb => {
             userNameList.forEach(usName => {
                 soList[usName].emit('reqMatchGame', { name: 'TestGame' });
             });
-            setTimeout(cb, 2000);
+            setTimeout(cb, 10000);
         },
         cb => {
             let count = 2;
@@ -618,20 +618,26 @@ testList.push(cb => {
                             setTimeout(cb, 1000);
                         },
                         cb => {
+                            soList['a']=createSocket();
                             login(soList['a'], 'a');
                             setTimeout(cb, 1000);
+                        },
+                        cb=>{
+                            console.log('disconnect && reconnect');
+                            cb();
                         }
                     ];
                     async.series(arr, cb);
                 });
             };
-            async.series(arr, cb => {
+            async.series(arr, () => {
                 setTimeout(cb, 2000);
             });
         },
         cb => {
             let bNotHearGameEnd = !bList.some(n => n.event == 'notiGameEnd');
             console.assert(bNotHearGameEnd, 'b NOT hear gameEnd');
+            cb();
         },
         cb => {
             soList['a'].disconnect();
@@ -642,18 +648,23 @@ testList.push(cb => {
             console.assert(bHearGameEnd, 'b hear gameEnd, b is the winner');
             cb();
         },
-        cb => {
-            let so = soList['a'] = createSocket();
-            so.on('notiGameEnd', data => {
-                aList.push({ event: 'notiGameEnd', data });
-            });
+        // 以后用邮件来发送
+        // cb => {
+        //     let so = soList['a'] = createSocket();
+        //     so.on('notiGameEnd', data => {
+        //         aList.push({ event: 'notiGameEnd', data });
+        //     });
 
-            login(soList['a'], 'a');
-            setTimeout(cb, 2000);
-        },
-        cb => {
-            let aHearGameEnd = aList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
-            console.assert(aHearGameEnd, 'a hear gameEnd, b is the winner');
+        //     login(so, 'a');
+        //     setTimeout(cb, 2000);
+        // },
+        // cb => {
+        //     let aHearGameEnd = aList.some(n => n.event == 'notiGameEnd' && n.data.data.winner == 'b');
+        //     console.assert(aHearGameEnd, 'a hear gameEnd, b is the winner');
+        //     cb();
+        // },
+        cb=>{
+            console.log(JSON.stringify(infoList,null,4));
             cb();
         }
 
@@ -740,7 +751,7 @@ createWatcher();
 setTimeout(() => {
     let list = testList;
 
-    let index = 5;
+    let index = 6;
     list = list.slice(0, index + 1);
     // list = [testList[index]];
 

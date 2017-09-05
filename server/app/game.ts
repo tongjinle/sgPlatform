@@ -200,6 +200,8 @@ export class Game {
     	let pler =_.find( this.playerList,pler=>pler.userName==playerName);
     	if(pler){
     		pler.isOffline=true;
+    		pler.offlineCount++;
+            pler.offlineTs = Date.now();
     	}
     };
 
