@@ -1,0 +1,147 @@
+第一版棋子设计
+
+士兵棋子
+    卫士
+        hp:320
+        damage:20
+        attackDistance:1
+        skillPoint:2
+        speed:2
+        agility:20
+        counter:25%
+        mpRecover:20%
+        skillList:[]
+
+
+棋子:
+    type:0
+    武力棋子
+
+        hp:150-200
+        damage:20-30
+        attackDistance:1
+        skillPoint:2
+        speed:3
+        agility:30-45
+        counter:50%
+        mpRecover:20%
+
+
+    type:1
+    智力棋子
+
+        hp:100-135
+        damage:10-15
+        attackDistance:5
+        skillPoint:4
+        speed:2
+        agility:15-25
+        counter:20%
+        mpRecover:35%
+
+技能cd:
+    普通技能cd为2
+    大技能cd为4
+
+
+孙策
+{   
+    type:0,
+    hp:160,
+    damage:30,
+    agility:35,
+    skillNameList:['撕咬','嗜血','海神']
+}
+
+大乔
+{
+    type:1
+    hp:100
+    damage:10,
+    agility:25,
+    skillNameList:['生命燃烧','灿烂光环','奉献']
+}
+
+许褚
+{
+    type:0,
+    hp:200,
+    damage:28,
+    agility:22,
+    skillNameList:['大地碎裂', '大木锤', '痛感麻木']
+}
+
+
+技能列表:
+skillList:
+[
+    {
+        name:'撕咬',
+        desc：'普通攻击附带吸血效果，孙策回复50%的伤害的hp，周围2格内的友军棋子平分剩下50%伤害所带来的hp恢复',
+        type:'deactive'
+    },
+    {
+        name:'嗜血',
+        desc:'如果孙策攻击的敌军棋子是不满血的，则会造成额外50%伤害',
+        type:'deactive'
+    },
+    {
+        isSuper:true,
+        name:'海神',
+        desc:'造成350%伤害（孙策hp低于10%的时候才可以使用）',
+        type:'deactive',
+
+    },
+
+
+    {
+        name:'生命燃烧',
+        desc：'消耗目标50hp+10%最大hp，但是能恢复目标2个技能点',
+        castDistance:'周围3格'
+        type:'active'
+    },
+    {
+        name:'灿烂光环',
+        desc：'周围2格内所有友军棋子和自己回复10+5%最大hp',
+        type:'deactive'
+
+    },
+    {
+        isSuper:true,
+        name:'奉献',
+        desc:'将施法者自己收到的伤害所丢失的hp的30%作为治疗量会输送给受伤最严重的友军棋子',
+        type:'deactive'
+    },
+
+
+
+    {
+        name:'幸运女神光环',
+        desc:'小乔周围5格的棋子，在攻击时候，有35%的几率造成200%的伤害',
+        type:'deactive'
+    },
+
+    {
+        name:'大地碎裂',
+        desc:'锤击大地，击飞许褚跟格子一条线上3格的所有敌军。敌军棋子被随机推向左右两侧，并且受到150%伤害；如果敌军棋子没有被推开，则受到300%伤害',
+        castDistance:'周围一格',
+        type:'active'
+    },
+
+    {
+        name:'痛感麻木',
+        desc:'如果许褚血量高于75%，则减少55%的伤害',
+        type:'deactive'
+    },
+
+    {
+        isSuper:true,
+        name:'胖子',
+        desc:'许褚每个回合回复5%的血量',
+        type:'deactive'
+    }
+
+
+  
+    
+]
