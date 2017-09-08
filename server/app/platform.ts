@@ -18,6 +18,8 @@ import * as _ from 'underscore';
 import * as Protocol from '../struct/protocol';
 import { ILimitGame } from './iLimitGame';
 
+import { TestGame } from './game/testGame';
+
 
 export class Platform {
     userList: User[];
@@ -88,11 +90,14 @@ export class Platform {
                 // this.matchingList[name] = list.filter(usName => _.find(this.userList, us => us.userName == usName && us.status == EUserStatus.Online));
                 // loger.debug('loopMatchGame');
                 // loger.debug(JSON.stringify(this.matchingList, null, 4));
+                let matchPlayerCount: number;
+                if (EGameName[name] == EGameName.TestGame) {
+                    matchPlayerCount = TestGame.PlayerCount;
+                }
 
-
-                while (list.length >= 2) {
+                while (list.length >= matchPlayerCount) {
                     let matchedList = list
-                        .splice(0, 2)
+                        .splice(0, matchPlayerCount)
                         .map(usName => _.find(this.userList, us => us.userName == usName));
 
                     loger.info(`notiMatchGame::${matchedList.map(us => us.userName).join('&')}`);

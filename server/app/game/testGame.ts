@@ -23,12 +23,12 @@ export interface ITestGameGameUpdate extends IGameUpdate{
 	gestureName:string;
 };
 
+
 export class TestGame extends LimitGame {
     private gestureMap: { playerName: string, gestureName: string }[];
     private winner: Player;
     private static gestureList = ['bu', 'jiandao', 'cuizi'];
 
-   
 
     constructor() {
         super();
@@ -194,4 +194,7 @@ export class TestGame extends LimitGame {
             this.notifyStatusChanged();
         }
     };
-}
+};
+
+
+TestGame.PlayerCount=2;

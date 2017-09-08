@@ -26,7 +26,7 @@ export class Game {
     // 玩家列表
     playerList: Player[];
     // 最大玩家人数
-    static maxPlayerCount: number;
+    static PlayerCount: number;
     // 随机种子
     seed: number;
     // 游戏所属的房间
