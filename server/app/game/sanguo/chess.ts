@@ -47,7 +47,7 @@ export enum EChessColor {
 };
 
 export class Chess {
-    id:string;
+    id: string;
     color: EChessColor;
     hp: number;
     maxHp: number;
@@ -115,10 +115,22 @@ export class Chess {
 
     constructor() {
         this.id = _.uniqueId('chess');
-        
+
         this.skillList = [];
         this.buffList = [];
     }
+
+    // 进入chessBoard舞台
+    enterChessBoard(chessBoard: ChessBoard): void {
+        this.chessBoard = chessBoard;
+
+        chessBoard.chessList.push(this);
+
+    };
+
+    leaveChessBoard(): void {
+        this.chessBoard.chessList = this.chessBoard.chessList.filter(ch => ch != this);
+    };
 
     // 获取可以行走的格子
     // 由子类来实现
@@ -149,7 +161,7 @@ export class Chess {
             amount: this.damage
         };
 
-        let bag = new Bag(EBagType.damage,bagData);
+        let bag = new Bag(EBagType.damage, bagData);
 
         this.fire(sanguoEvent.attack, bag);
 
@@ -279,17 +291,17 @@ export class Chess {
     // 可以看成简单的生命移除
     acceptDamage(damageAmount: number): void {
         this.hp -= damageAmount;
-        if(this.hp<0){
-            this.hp =0;
+        if (this.hp < 0) {
+            this.hp = 0;
         }
 
-        if(this.hp==0){
+        if (this.hp == 0) {
             this.die();
         }
     };
 
     // 死亡
-    die():void{
+    die(): void {
         // todo
         // 记得考虑"地狱领主"那种
     }
