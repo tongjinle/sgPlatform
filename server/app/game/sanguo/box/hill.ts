@@ -1,7 +1,7 @@
 // 山峰
 import { Box } from '../box';
 
-class HillBox extends Box {
+export class HillBox extends Box {
 
     constructor() {
         super();

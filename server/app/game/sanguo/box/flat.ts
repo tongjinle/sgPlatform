@@ -1,7 +1,7 @@
 // 平地
 import { Box } from '../box';
 
-class FlatBox extends Box {
+export class FlatBox extends Box {
 
     constructor() {
         super();

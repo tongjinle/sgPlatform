@@ -1,7 +1,7 @@
 // 水域
 import { Box } from '../box';
 
-class WaterBox extends Box {
+export class WaterBox extends Box {
 
     constructor() {
         super();
