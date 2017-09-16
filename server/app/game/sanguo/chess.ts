@@ -125,9 +125,23 @@ export class Chess {
         this.chessBoard = chessBoard;
 
         chessBoard.chessList.push(this);
-
+        this.fire(sanguoEvent.enterChessBoard,data);
     };
 
+    resetPosition(position:Position):void{
+        let lastPosition = this.position;
+        this.position = position;
+        // 重新计算棋子之间的相互效果,比如光环
+        let data:sanguoDataStruct.IResetPosition={
+            chess:this,
+            lastPosition,
+            position
+        };
+        this.fire(sanguoEvent.resetPosition,data);
+
+    }
+
+    //  离开chessBoard舞台
     leaveChessBoard(): void {
         this.chessBoard.chessList = this.chessBoard.chessList.filter(ch => ch != this);
     };
