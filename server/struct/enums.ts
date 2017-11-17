@@ -51,7 +51,8 @@ export enum EGameName {
 	TestGame,
 	Sanguo,
 	Majiang,
-	ChineseChess
+	ChineseChess,
+	Honest,
 };
 
 
