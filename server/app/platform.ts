@@ -81,8 +81,8 @@ export class Platform {
 
 					loger.info(`notiMatchGame::${matchedList.map(us => us.userName).join('&')}`);
 
-
-					let ro = new Room(EGameName[name], matchedList);
+					let initData:
+					let ro = new Room(EGameName[name], matchedList,{});
 					{
 						let notiData: Protocol.INotifyMatchGame = {
 							roomId: ro.id,

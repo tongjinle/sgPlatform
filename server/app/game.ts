@@ -16,6 +16,10 @@ export class GameAction<T> {
 	actionData: T;
 };
 
+export interface IGameInitData{
+	extData:{},
+};
+
 export class Game {
 	// 编号
 	id: string;
@@ -55,7 +59,7 @@ export class Game {
 	// 处理操作列表
 	protected parseActionHandlerList: { [actionName: string]: (action: GameAction<any>) => void };
 
-	constructor() {
+	constructor({extData}:IGameInitData) {
 		this.id = _.uniqueId();
 		this.seed = 10000;
 		this.seedGenerator = SRnd(this.seed.toString());
@@ -66,9 +70,16 @@ export class Game {
 		this.status = EGameStatus.Prepare;
 		this.turnIndex = -1;
 
+
+		// parse extData
+		this.parseExtData(extData);
+
 		// check init
 		this.initCheckActionHandlerList();
 	};
+
+
+
 
 	private initCheckActionHandlerList(): void {
 		let list = this.checkActionHandlerList;
@@ -136,6 +147,11 @@ export class Game {
 	// 需要具体的游戏去重写这个方法
 	protected turn(): string { return undefined; };
 
+	// 解析游戏需要的extData
+	protected parseExtData(extData:{}){
+
+	}
+
 
 	// 检验玩家发出的游戏操作
 	checkAction(action: GameAction<any>): boolean {
@@ -148,8 +164,6 @@ export class Game {
 
 	// 处理游戏操作信息
 	parseAction(action: GameAction<any>): void {
-		console.log(action.actionName);
-		console.log(Object.keys(this.parseActionHandlerList).join('=='));
 
 		let list = this.parseActionHandlerList;
 		let handler = list[action.actionName];
