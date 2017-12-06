@@ -1,143 +1,148 @@
 import * as Http from 'http';
-import {
-	EPlatformStatus,
-	EGameName,
-	EGameInfoType
-} from '../struct/enums';
-import { User } from './user';
-import { Player } from './user/player';
-import { Watcher } from './user/watcher';
-import { Room } from './room';
+import { EPlatformStatus } from '../struct/enums';
 import * as SocketIO from 'socket.io';
 import loger from './loger';
 import * as _ from 'underscore';
-import * as Protocol from '../struct/protocol';
 
+
+import MatchMgr from './match/matchMgr';
+import UserMgr from './user/userMgr';
+import RoomMgr from './room/roomMgr';
+
+import config from './config';
 
 export class Platform {
-	userList: User[];
-	roomList: Room[];
-	status: EPlatformStatus;
-	io: SocketIO.Server;
+    status: EPlatformStatus;
+    io: SocketIO.Server;
+
+    matchMgr: MatchMgr;
+    userMgr: UserMgr;
+    roomMgr: RoomMgr;
+
+    // 在等待匹配的用户列表
+    matchingList: { [gameName: string]: string[] };
+    // 等待被重连的socket
+    holdList: { userName: string, ts: number }[];
+    // 重连时间
+    private holdDuration: number = 5 * 60 * 1000;
+
+    private constructor() {
+        this.startServer();
+
+        this.userMgr = new UserMgr();
+
+        this.roomMgr = new RoomMgr();
+
+        this.matchMgr = new MatchMgr(500);
+        this.matchMgr.startLoop();
+
+        this.holdList = [];
+        this.matchingList = {};
+
+        this.listen();
+
+        this.status = EPlatformStatus.Open;
+
+    }
+
+    private startServer() {
+        const { port } = config.platform;
+        let ret: Platform;
+        let serv = Http.createServer();
+        this.io = SocketIO(serv);
 
 
-	// 在等待匹配的用户列表
-	matchingList: { [gameName: string]: string[] };
-	// 等待被重连的socket
-	holdList: { userName: string, ts: number }[];
-	// 重连时间
-	private holdDuration: number = 5 * 60 * 1000;
-
-	private constructor(io: SocketIO.Server) {
-		this.userList = [];
-		this.roomList = [];
-		this.io = io;
-		this.holdList = [];
-		this.matchingList = {};
-
-		this.status = EPlatformStatus.Open;
-
-		this.listen();
-		this.loopHoldList();
-		this.loopMatchGame();
-
-	}
-
-	private listen(): void {
-		let io = this.io;
-		io.on('connect', so => {
-			let us = new User(so, this);
-			this.userList.push(us);
-			loger.info(`connect::${so.id}`);
-		});
-	}
-
-	broadcast(eventName: string, ...data: any[]): void {
-		this.io.to('platform').emit(eventName, ...data);
-	}
-
-	private loopHoldList(): void {
-		setInterval(() => {
-			let ts = new Date().getTime();
-			for (var i = 0; i < this.holdList.length; i++) {
-				let ho = this.holdList[i];
-				if (ts - ho.ts >= this.holdDuration) {
-					this.holdList.splice(i, 1);
-					loger.info(`remove hold::${ho.userName}`);
-				}
-			}
-		}, 1000);
-	}
+        serv.listen(port, () => {
+            let addrInfo = serv.address();
+            loger.info(`server address : ${addrInfo.address}`);
+            loger.info(`server port : ${addrInfo.port}`);
+            loger.info(`start server at ${new Date().toTimeString()}`);
+        });
 
 
-	private loopMatchGame(): void {
-		setInterval(() => {
-			let ts = Date.now();
-			_.each(this.matchingList, (list, name) => {
-				while (list.length >= 2) {
-					let matchedList = list
-						.splice(0, 2)
-						.map(usName => _.find(this.userList, us => us.userName == usName));
+    }
 
-					loger.info(`notiMatchGame::${matchedList.map(us => us.userName).join('&')}`);
+    private listen(): void {
+        let io = this.io;
+        io.on('connect', so => {
+            this.userMgr.add(so, this);
+        });
+    }
 
-					let initData:
-					let ro = new Room(EGameName[name], matchedList,{});
-					{
-						let notiData: Protocol.INotifyMatchGame = {
-							roomId: ro.id,
-							playerNameList: ro.playerList.map(pler => pler.userName)
-						};
-						this.io.to(ro.id).emit('notiMatchGame', notiData);
-					}
-					this.roomList.push(ro);
-					ro.start();
-				}
-				// notify user MATCHING
-				list.forEach(usName => {
-					let us = _.find(this.userList, us => us.userName == usName);
-					if (us) {
-						us.socket.emit('notiMatchingGame');
-						loger.info(`notiMatchingGame::${us.userName}`);
-					}
-				});
-			});
-			// console.log(JSON.stringify(this.matchingList, null, 4));
-		}, 5000);
-	}
+    broadcast(eventName: string, ...data: any[]): void {
+        this.io.to('platform').emit(eventName, ...data);
+    }
 
-	clear(user: User): void {
-		// 将掉线的user从matchingList中移除
-		{
-			let map = this.matchingList;
-			_.each(map, (list, gameName) => {
-				list = list.filter(usName => usName != user.userName);
-			});
-		}
-		// 如果有人退出,则要把游戏自动结束,认为这样是一种投降
-		// todo
-	}
-
-	private static plSingle: Platform;
-	static getInstance(): Platform {
-		if (Platform.plSingle) { return Platform.plSingle; }
-
-		const PORT = 1216;
-		let ret: Platform;
-		let serv = Http.createServer();
-		let io = SocketIO(serv);
-		ret = new Platform(io);
+    // private loopHoldList(): void {
+    // 	setInterval(() => {
+    // 		let ts = new Date().getTime();
+    // 		for (var i = 0; i < this.holdList.length; i++) {
+    // 			let ho = this.holdList[i];
+    // 			if (ts - ho.ts >= this.holdDuration) {
+    // 				this.holdList.splice(i, 1);
+    // 				loger.info(`remove hold::${ho.userName}`);
+    // 			}
+    // 		}
+    // 	}, 1000);
+    // }
 
 
-		serv.listen(PORT, () => {
-			let addrInfo = serv.address();
-			loger.info(`server address : ${addrInfo.address}`);
-			loger.info(`server port : ${addrInfo.port}`);
-			loger.info(`start server at ${new Date().toTimeString()}`);
-		});
+    // private loopMatchGame(): void {
+    // setInterval(() => {
+    // 	let ts = Date.now();
+    // 	_.each(this.matchingList, (list, name) => {
+    // 		while (list.length >= 2) {
+    // 			let matchedList = list
+    // 				.splice(0, 2)
+    // 				.map(usName => _.find(this.userList, us => us.userName == usName));
 
-		Platform.plSingle = ret;
-		return ret;
-	};
+    // 			loger.info(`notiMatchGame::${matchedList.map(us => us.userName).join('&')}`);
+
+    // 			let initData:igam
+    // 			let ro = new Room(EGameName[name], matchedList,{});
+    // 			{
+    // 				let notiData: Protocol.INotifyMatchGame = {
+    // 					roomId: ro.id,
+    // 					playerNameList: ro.playerList.map(pler => pler.userName)
+    // 				};
+    // 				this.io.to(ro.id).emit('notiMatchGame', notiData);
+    // 			}
+    // 			this.roomList.push(ro);
+    // 			ro.start();
+    // 		}
+    // 		// notify user MATCHING
+    // 		list.forEach(usName => {
+    // 			let us = _.find(this.userList, us => us.userName == usName);
+    // 			if (us) {
+    // 				us.socket.emit('notiMatchingGame');
+    // 				loger.info(`notiMatchingGame::${us.userName}`);
+    // 			}
+    // 		});
+    // 	});
+    // 	// console.log(JSON.stringify(this.matchingList, null, 4));
+    // }, 5000);
+    // }
+
+    // clear(user: User): void {
+    // 	// 将掉线的user从matchingList中移除
+    // 	{
+    // 		let map = this.matchingList;
+    // 		_.each(map, (list, gameName) => {
+    // 			list = list.filter(usName => usName != user.userName);
+    // 		});
+    // 	}
+    // 	// 如果有人退出,则要把游戏自动结束,认为这样是一种投降
+    // 	// todo
+    // }
+
+    private static ins: Platform;
+    static getInstance(): Platform {
+        if (!Platform.ins) {
+            Platform.ins = new Platform();
+        }
+
+        return Platform.ins;
+
+    };
 
 };

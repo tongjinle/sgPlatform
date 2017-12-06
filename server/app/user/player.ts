@@ -1,5 +1,5 @@
 import { EGameStatus } from '../../struct/enums';
-import { Game } from '../game';
+import { Game } from '../game/game';
 
 export class Player {
 	userName: string;

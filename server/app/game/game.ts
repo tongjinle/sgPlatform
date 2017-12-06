@@ -1,10 +1,10 @@
-import { EGameStatus, EGameName } from '../struct/enums';
-import { Player } from './user/player';
-import { Room } from './room';
 import * as _ from 'underscore';
-import loger from './loger';
-import * as Protocol from '../struct/protocol';
 import * as SRnd from 'seedrandom';
+import { EGameStatus, EGameName } from '../../struct/enums';
+import { Player } from '../user/player';
+import { Room } from '../room/room';
+import loger from '../loger';
+import * as Protocol from '../../struct/protocol';
 
 export interface IGameResult {
 	winer: string;

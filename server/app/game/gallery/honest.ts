@@ -1,8 +1,8 @@
 import { Game, GameAction, IGameInitData } from '../game';
-import { Player } from '../user/player';
+import { Player } from '../../user/player';
 import * as _ from 'underscore';
-import loger from '../loger';
-import * as Protocol from '../../struct/protocol';
+import loger from '../../loger';
+import * as Protocol from '../../../struct/protocol';
 
 
 enum EStatus {

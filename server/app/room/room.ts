@@ -1,12 +1,12 @@
-import { EGameName } from '../struct/enums';
-import { User } from './user';
-import { IGameInitData, Game, GameAction } from './game';
-import { createGame } from './gameUtil';
-import { Player } from './user/player';
-import { Watcher } from './user/watcher';
-import loger from './loger';
-import { Platform } from './platform';
-import * as Protocol from '../struct/protocol';
+import { EGameName } from '../../struct/enums';
+import { User } from '../user/user';
+import { IGameInitData, Game, GameAction } from '../game/game';
+import { createGame } from '../game/gameUtil';
+import { Player } from '../user/player';
+import { Watcher } from '../user/watcher';
+import loger from '../loger';
+import { Platform } from '../platform';
+import * as Protocol from '../../struct/protocol';
 import * as _ from 'underscore';
 
 

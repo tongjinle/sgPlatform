@@ -1,8 +1,8 @@
-import { EGameName } from '../struct/enums';
+import { EGameName } from '../../struct/enums';
 import { IGameInitData, Game, GameAction } from './game';
 
-import { HonestGame, IHonestGameInitData } from './game/honest';
-import { TestGame } from './game/testGame';
+import { HonestGame, IHonestGameInitData } from './gallery/honest';
+import { TestGame } from './gallery/testGame';
 
 export function createGame(gameName: EGameName, initData: IGameInitData): Game {
     if (EGameName.Sanguo == gameName) {

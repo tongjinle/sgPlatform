@@ -133,18 +133,20 @@ export interface IGameRule {
 // 匹配游戏
 export interface IReqMatchGame {
     name: EGameName;
-    extData?: {};
+    extData: any;
 };
 
 export interface IResMatchGame {
-    flag: boolean;
+    flag: boolean,
+    code:number,
+
 };
 
 export interface INotifyMatchingGame{}
 
 export interface INotifyMatchGame {
-    roomId: string;
-    playerNameList: string[]
+    roomId: string,
+    playerNameList: string[],
 };
 
 // 游戏操作
