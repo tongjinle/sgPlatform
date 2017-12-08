@@ -17,7 +17,8 @@ export interface IReqLoginData {
 };
 
 export interface IResLoginData {
-    flag: boolean;
+    flag: boolean,
+    code: number,
 };
 
 export interface INotifyLoginData {
@@ -138,11 +139,11 @@ export interface IReqMatchGame {
 
 export interface IResMatchGame {
     flag: boolean,
-    code:number,
+    code: number,
 
 };
 
-export interface INotifyMatchingGame{}
+export interface INotifyMatchingGame { }
 
 export interface INotifyMatchGame {
     roomId: string,
@@ -179,7 +180,7 @@ export interface INotifyGameStart {
 
 
 // 游戏结束
-export interface INotifyGameEnd<T>{
+export interface INotifyGameEnd<T> {
     roomId: string;
     result: T;
 };
@@ -188,11 +189,11 @@ export interface INotifyGameEnd<T>{
 
 // 请求当前回合的玩家
 // ** 一般来说,是
-export interface IReqGameTurn{
+export interface IReqGameTurn {
     roomId: string;
 };
 
-export interface IResGameTurn{}
+export interface IResGameTurn { }
 
 export interface INotifyGameTurn {
     roomId: string;
@@ -202,6 +203,6 @@ export interface INotifyGameTurn {
 
 
 // 游戏状态update
-export interface INotifyGameUpdate{
+export interface INotifyGameUpdate {
 
 };

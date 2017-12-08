@@ -1,7 +1,8 @@
 import { EGameName } from '../../struct/enums';
 import { User } from '../user/user';
 import { IGameInitData, Game, GameAction } from '../game/game';
-import { createGame } from '../game/gameUtil';
+import GameMap from '../game/gameMap';
+// import { createGame } from '../game/gameUtil';
 import { Player } from '../user/player';
 import { Watcher } from '../user/watcher';
 import loger from '../loger';
@@ -35,7 +36,8 @@ export class Room {
         });
 
         // create game;
-        let ga = this.game = createGame(gameName, initData);
+        let gameCls = GameMap[gameName];
+        let ga = this.game = new gameCls(initData);
         ga.room = this;
         // push player;
         this.playerList.forEach(us => {

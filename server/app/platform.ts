@@ -11,6 +11,7 @@ import RoomMgr from './room/roomMgr';
 
 import config from './config';
 
+
 export class Platform {
     status: EPlatformStatus;
     io: SocketIO.Server;
@@ -19,33 +20,13 @@ export class Platform {
     userMgr: UserMgr;
     roomMgr: RoomMgr;
 
-    // 在等待匹配的用户列表
-    matchingList: { [gameName: string]: string[] };
-    // 等待被重连的socket
-    holdList: { userName: string, ts: number }[];
-    // 重连时间
-    private holdDuration: number = 5 * 60 * 1000;
-
     private constructor() {
-        this.startServer();
-
         this.userMgr = new UserMgr();
-
         this.roomMgr = new RoomMgr();
-
         this.matchMgr = new MatchMgr(500);
-        this.matchMgr.startLoop();
-
-        this.holdList = [];
-        this.matchingList = {};
-
-        this.listen();
-
-        this.status = EPlatformStatus.Open;
-
     }
 
-    private startServer() {
+    startServer() {
         const { port } = config.platform;
         let ret: Platform;
         let serv = Http.createServer();
@@ -60,6 +41,13 @@ export class Platform {
         });
 
 
+        
+
+        this.matchMgr.startLoop();
+        this.listen();
+
+        this.status = EPlatformStatus.Open;
+
     }
 
     private listen(): void {
@@ -69,6 +57,8 @@ export class Platform {
         });
     }
 
+
+    // 广播到platform房间
     broadcast(eventName: string, ...data: any[]): void {
         this.io.to('platform').emit(eventName, ...data);
     }

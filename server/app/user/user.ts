@@ -16,6 +16,8 @@ import { Game, GameAction } from '../game/game';
 import EMatch from '../match/eMatch';
 import IMatchInfo from '../match/iMatchInfo';
 
+import ELogin from './eLogin';
+
 export class User {
     userName: string;
     roomList: Room[];
@@ -54,12 +56,9 @@ export class User {
             });
 
             // 监听
-            so.on('reqLogin', (data: Protocol.IReqLoginData) => {
+            so.on('reqLogin', async (data: Protocol.IReqLoginData) => {
                 let { userName, password } = data;
-                this.login(userName, password);
-
-
-
+                await this.login(userName, password);
             });
         }
         else if (EUserStatus.Online == v) {
@@ -175,36 +174,37 @@ export class User {
     }
 
 
-    login(userName: string, password: string): void {
+    async login(userName: string, password: string):Promise<void> {
         let so = this.socket;
         let pl = this.platform;
         let io = pl.io;
 
         // 数据库密码
-        let flag = true;
-        this.userName = userName;
-        this.joinPlatform();
-        this.status = EUserStatus.Online;
-
-
-        let resData: Protocol.IResLoginData = { flag };
+        let Loginflag = await pl.userMgr.login(userName, password, so);
+        let flag = Loginflag == ELogin.success;
+        let resData: Protocol.IResLoginData = { flag, code: Loginflag, };
         so.emit('resLogin', resData);
-        if (flag) {
-            this.status = EUserStatus.Online;
-            this.joinPlatform();
 
-            let notiData: Protocol.INotifyLoginData = { userName };
+
+
+        if (flag) {
+            this.userName = userName;
+            this.joinPlatform();
+            this.status = EUserStatus.Online;
+
+
+            let notiData: Protocol.INotifyLoginData = { userName, };
             pl.broadcast('notiLogin', notiData);
 
             // 查看是否是重连
-            if (pl.holdList.some(ho => ho.userName == userName)) {
-                pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
-                loger.info(`reconnect::${userName}`);
-                this.reconnect();
-            }
+            // if (pl.holdList.some(ho => ho.userName == userName)) {
+            //     pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
+            //     loger.info(`reconnect::${userName}`);
+            //     this.reconnect();
+            // }
         }
 
-        loger.info(`login::${userName}::${flag}`);
+        loger.info(`login::${userName}::${ELogin[Loginflag]}`);
     }
 
 
@@ -360,7 +360,7 @@ export class User {
 
 
                 // 压入'重连'列表
-                pl.holdList.push({ userName: this.userName, ts: Date.now() });
+                // pl.holdList.push({ userName: this.userName, ts: Date.now() });
 
 
                 // 清理

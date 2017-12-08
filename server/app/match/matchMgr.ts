@@ -2,20 +2,24 @@ import { EGameName } from '../../struct/enums';
 import IMatch from './iMatch';
 import IMatchInfo from './iMatchInfo';
 import EMatch from './eMatch';
+import IAfterMatch from './IAfterMatch';
 
 // 匹配管理类
 export default class MatchMgr {
-    private matchDict: { [gameName: number]: IMatch };
     private dict: { [gameName: number]: IMatchInfo[] };
+    private matchDict: { [gameName: number]: IMatch };
+    private afterMatchDict: { [gameName: number]: IAfterMatch };
+
     private loopHandle: NodeJS.Timer;
     private loopInterval: number;
 
     // 成功
-    public afterMatchSucc: (matched: IMatchInfo[]) => void;
 
     constructor(loopInterval: number) {
         this.dict = {};
         this.matchDict = {};
+        this.afterMatchDict = {};
+
         this.loopInterval = loopInterval;
     }
 
@@ -36,9 +40,12 @@ export default class MatchMgr {
     startLoop() {
         if (!this.loopHandle) {
             this.loopHandle = setInterval(() => {
-                let matched = this.loop();
-                if (matched && this.afterMatchSucc) {
-                    this.afterMatchSucc(matched);
+                let matchRst = this.loop();
+                if (matchRst) {
+                    let afterMatch = this.afterMatchDict[matchRst.gameName];
+                    if (afterMatch) {
+                        afterMatch(matchRst.matchList);
+                    }
                 }
             }, this.loopInterval);
         }
@@ -51,19 +58,30 @@ export default class MatchMgr {
         }
     }
 
-    private loop(): IMatchInfo[] {
-        for (let gameName in this.dict) {
+    // 增加一个匹配算法
+    addMatch(gameName: EGameName, match: IMatch) {
+        this.matchDict[gameName] = match;
+    }
+
+    // 增加一个匹配成功之后的方法
+    addAfterMatch(gameName: EGameName, afterMatch: IAfterMatch) {
+        this.afterMatchDict[gameName] = afterMatch;
+    }
+
+    private loop(): { gameName: EGameName, matchList: IMatchInfo[] } {
+        for (let key in this.dict) {
+            let gameName: EGameName = parseInt(key);
             let list = this.dict[gameName];
             let matchHandle: IMatch = this.matchDict[gameName];
             if (!matchHandle) {
                 return undefined;
             }
-            let matched = matchHandle(list);
+            let matchList = matchHandle(list);
 
-            if (matched) {
-                // filter matched
-                list = list.filter(ma => !matched.some(maed => maed.id == ma.id));
-                return matched;
+            if (matchList) {
+                // filter matchList
+                list = list.filter(ma => !matchList.some(maed => maed.id == ma.id));
+                return { gameName, matchList, };
             }
             return undefined;
         }

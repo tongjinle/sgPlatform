@@ -5,6 +5,8 @@ import { Player } from '../user/player';
 import { Room } from '../room/room';
 import loger from '../loger';
 import * as Protocol from '../../struct/protocol';
+import Plug from './plug/plug';
+import { EventEmitter } from 'events';
 
 export interface IGameResult {
 	winer: string;
@@ -16,17 +18,37 @@ export class GameAction<T> {
 	actionData: T;
 };
 
-export interface IGameInitData{
-	extData:{},
+export interface IGameInitData {
 };
 
-export class Game {
+export interface ICheckAction {
+	(action: GameAction<any>): boolean,
+}
+
+export enum GameEvent {
+	beforeParseInitData = 'beforeParseInitData',
+	afterParseInitData = 'afterParseInitData',
+
+	beforeStart = 'beforeStart',
+	afterStart = 'afterStart',
+
+	beforeCheckAction = 'beforeCheckAction',
+	afterCheckAction = 'afterCheckAction',
+
+	beforeParseAction = 'beforeParseAction',
+	afterParseAction = 'afterParseAction',
+
+	beforePause = 'beforePause',
+	afterPause = 'afterPause',
+
+}
+
+
+export class Game extends EventEmitter {
 	// 编号
 	id: string;
 	// 玩家列表
 	playerList: Player[];
-	// 最大玩家人数
-	static maxPlayerCount: number;
 	// 随机种子
 	seed: number;
 	// 游戏所属的房间
@@ -49,17 +71,23 @@ export class Game {
 	updateValueList: any[];
 	// 是否是复盘状态
 	isReplay: boolean;
+	// 插件数据
+	plugList: Plug[];
 
 	// 随机种子发生器
 	protected seedGenerator: SRnd.prng;
 	// 当前回合数
 	protected turnIndex: number;
 	// 检验操作是否合理
-	protected checkActionHandlerList: ((action: GameAction<any>) => boolean)[];
+	public checkActionHandlerList: ICheckAction[];
 	// 处理操作列表
 	protected parseActionHandlerList: { [actionName: string]: (action: GameAction<any>) => void };
 
-	constructor({extData}:IGameInitData) {
+
+
+	constructor(initData: IGameInitData) {
+		super();
+
 		this.id = _.uniqueId();
 		this.seed = 10000;
 		this.seedGenerator = SRnd(this.seed.toString());
@@ -67,12 +95,14 @@ export class Game {
 		this.checkActionHandlerList = [];
 		this.parseActionHandlerList = {};
 		this.updateValueList = [];
+		this.plugList = [];
 		this.status = EGameStatus.Prepare;
 		this.turnIndex = -1;
 
 
 		// parse extData
-		this.parseExtData(extData);
+		this.parseInitData(initData);
+		this.emit(GameEvent.afterParseInitData, initData);
 
 		// check init
 		this.initCheckActionHandlerList();
@@ -87,27 +117,30 @@ export class Game {
 		// 游戏不在play的状态
 		list.push((action: GameAction<any>) => {
 			let flag = this.status == EGameStatus.Play;
-			if(!flag){
+			if (!flag) {
 				loger.error(`game::check::ERR NOT PLAY STATUS`);
 			}
 			return flag;
 		});
 
-		// 没有行棋者 或者 非行棋者发出请求
-		list.push((action : GameAction<any>)=> {
-			let pler = this.playerList[this.turnIndex];
-			let flag = pler && pler.isTurn;
-			if(!flag){
-				loger.error(`game::check::ERR NO SUCH PLAYER OR NOT TURN`);
-			}
-			return flag;
-		 });
 
+
+
+	}
+
+	addPlug(plug: Plug): void {
+		// 同一个plug不应该加载两次
+		if (this.plugList.some(pl => pl.name == plug.name)) { return; }
+
+		this.plugList.push(plug);
+		plug.attachGame(this);
 
 	}
 
 	// 开始游戏
 	start(): void {
+		this
+
 		this.status = EGameStatus.Play;
 		let ro = this.room;
 		let notiData: Protocol.INotifyGameStart = {
@@ -118,6 +151,8 @@ export class Game {
 
 		ro.notifyAll('notiGameStart', notiData);
 		loger.info(`game::start::${ro.id}::${EGameName[ro.gameName]}`);
+
+		this.emit(GameEvent.afterStart);
 
 		this.notifyTurn();
 	};
@@ -148,7 +183,7 @@ export class Game {
 	protected turn(): string { return undefined; };
 
 	// 解析游戏需要的extData
-	protected parseExtData(extData:{}){
+	protected parseInitData(initData: IGameInitData) {
 
 	}
 
@@ -168,14 +203,20 @@ export class Game {
 		let list = this.parseActionHandlerList;
 		let handler = list[action.actionName];
 		if (handler) {
+			this.emit(GameEvent.beforeParseAction, action);
 			handler(action);
+			this.emit(GameEvent.afterParseAction, action);
+
 		}
+
+
 	};
 
 
 	// 暂停游戏
 	pause(): void {
 		this.status = EGameStatus.Pause;
+		this.emit(GameEvent.afterPause);
 	};
 
 

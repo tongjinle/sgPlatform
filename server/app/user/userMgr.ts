@@ -1,6 +1,7 @@
 import * as SocketIO from 'socket.io';
 import loger from '../loger';
 import { User } from './user';
+import ELogin from './eLogin';
 import { Platform } from '../platform';
 import * as _ from 'underscore';
 
@@ -18,14 +19,21 @@ export default class UserMgr {
 
     }
 
+
     // 通过socketId寻找user
-    find(socketId: string): User {
+    findBySocketId(socketId: string): User {
         return _.find(this.userList, us => us.socket.id == socketId);
     }
 
+    findByUserName(userName:string):User{
+        return _.find(this.userList, us => us.userName == userName);
+    }
+
+
+
     // 通过socketiId删除user
     remove(socketId: string): boolean {
-        let user = this.find(socketId);
+        let user = this.findBySocketId(socketId);
         if (user) {
             this.userList = this.userList.filter(us => us != user);
             loger.info(`disconnect::${socketId}`);
@@ -33,4 +41,17 @@ export default class UserMgr {
         }
         return false;
     }
+
+
+    // 登录
+    async login(userName: string, password: string, socket: SocketIO.Socket): Promise<ELogin> {
+        if (socket) {
+            let us = this.findBySocketId(socket.id);
+            if (us) {
+                return ELogin.success;
+            }
+        }
+        return ELogin.fail;
+    }
+
 }

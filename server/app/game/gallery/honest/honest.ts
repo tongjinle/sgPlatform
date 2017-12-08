@@ -1,8 +1,8 @@
-import { Game, GameAction, IGameInitData } from '../game';
-import { Player } from '../../user/player';
+import { Game, GameAction, IGameInitData } from '../../game';
+import { Player } from '../../../user/player';
 import * as _ from 'underscore';
-import loger from '../../loger';
-import * as Protocol from '../../../struct/protocol';
+import loger from '../../../loger';
+import * as Protocol from '../../../../struct/protocol';
 
 
 enum EStatus {
@@ -30,8 +30,8 @@ enum EAnswerRole {
 
 
 export interface IHonestGameInitData extends IGameInitData {
-    boy: string,
-    girl: string,
+    boyName: string,
+    girlName: string,
 }
 
 
