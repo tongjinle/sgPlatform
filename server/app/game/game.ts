@@ -25,7 +25,7 @@ export interface ICheckAction {
 	(action: GameAction<any>): boolean,
 }
 
-export enum GameEvent {
+export enum EGameEvent {
 	beforeParseInitData = 'beforeParseInitData',
 	afterParseInitData = 'afterParseInitData',
 
@@ -65,6 +65,8 @@ export class Game extends EventEmitter {
 	initValue: any;
 	// 当前状态
 	currValue: any;
+	// '真实'操作名列表
+	realActionNameList: string[];
 	// '真实'操作列表
 	realActionList: GameAction<any>[];
 	// 状态更新列表
@@ -76,16 +78,14 @@ export class Game extends EventEmitter {
 
 	// 随机种子发生器
 	protected seedGenerator: SRnd.prng;
-	// 当前回合数
-	protected turnIndex: number;
 	// 检验操作是否合理
-	public checkActionHandlerList: ICheckAction[];
+	protected checkActionHandlerList: ICheckAction[];
 	// 处理操作列表
 	protected parseActionHandlerList: { [actionName: string]: (action: GameAction<any>) => void };
 
 
 
-	constructor(initData: IGameInitData) {
+	constructor() {
 		super();
 
 		this.id = _.uniqueId();
@@ -95,14 +95,13 @@ export class Game extends EventEmitter {
 		this.checkActionHandlerList = [];
 		this.parseActionHandlerList = {};
 		this.updateValueList = [];
+
+		this.realActionNameList = [];
+		this.realActionList = [];
+
 		this.plugList = [];
+
 		this.status = EGameStatus.Prepare;
-		this.turnIndex = -1;
-
-
-		// parse extData
-		this.parseInitData(initData);
-		this.emit(GameEvent.afterParseInitData, initData);
 
 		// check init
 		this.initCheckActionHandlerList();
@@ -111,14 +110,14 @@ export class Game extends EventEmitter {
 
 
 
-	private initCheckActionHandlerList(): void {
+	protected initCheckActionHandlerList(): void {
 		let list = this.checkActionHandlerList;
 
 		// 游戏不在play的状态
 		list.push((action: GameAction<any>) => {
 			let flag = this.status == EGameStatus.Play;
 			if (!flag) {
-				loger.error(`game::check::ERR NOT PLAY STATUS`);
+				loger.error(`game::check::NOT PLAY STATUS`);
 			}
 			return flag;
 		});
@@ -139,52 +138,28 @@ export class Game extends EventEmitter {
 
 	// 开始游戏
 	start(): void {
-		this
+		this.emit(EGameEvent.beforeStart);
 
 		this.status = EGameStatus.Play;
 		let ro = this.room;
 		let notiData: Protocol.INotifyGameStart = {
 			roomId: ro.id,
 			gameName: ro.gameName,
-			playerNameList: ro.playerList.map(pler => pler.userName)
+			playerNameList: this.playerList.map(pler => pler.userName),
 		};
 
 		ro.notifyAll('notiGameStart', notiData);
 		loger.info(`game::start::${ro.id}::${EGameName[ro.gameName]}`);
 
-		this.emit(GameEvent.afterStart);
+		this.emit(EGameEvent.afterStart);
 
-		this.notifyTurn();
 	};
 
 
-	protected notifyTurn(): void {
-		this.turn();
-
-		let pler = _.find(this.playerList, pler => pler.isTurn);
-		if (pler) {
-			let plNameInTurn = pler.userName;
-			let ro = this.room;
-			let notiData: Protocol.INotifyGameTurn = {
-				roomId: ro.id,
-				playerName: plNameInTurn,
-				turnIndex: this.turnIndex
-			};
-			ro.notifyAll('notiGameTurn', notiData);
-			loger.info(`game::notifyGameTurn::${JSON.stringify(notiData)}`);
-		}
-		else {
-			loger.error(`game::notifyTurn::${this.playerList.map(pl => pl.userName + '==' + pl.isTurn).join('\n')}`);
-		}
-	}
-
-	// 获取当前回合的选手
-	// 需要具体的游戏去重写这个方法
-	protected turn(): string { return undefined; };
 
 	// 解析游戏需要的extData
-	protected parseInitData(initData: IGameInitData) {
-
+	parseInitData(initData: IGameInitData) {
+		this.emit(EGameEvent.afterParseInitData, initData);
 	}
 
 
@@ -203,9 +178,13 @@ export class Game extends EventEmitter {
 		let list = this.parseActionHandlerList;
 		let handler = list[action.actionName];
 		if (handler) {
-			this.emit(GameEvent.beforeParseAction, action);
+			this.emit(EGameEvent.beforeParseAction, action);
 			handler(action);
-			this.emit(GameEvent.afterParseAction, action);
+
+			if (this.realActionNameList.indexOf(action.actionData) >= 0) {
+				this.realActionList.push(action);
+			}
+			this.emit(EGameEvent.afterParseAction, action);
 
 		}
 
@@ -216,7 +195,7 @@ export class Game extends EventEmitter {
 	// 暂停游戏
 	pause(): void {
 		this.status = EGameStatus.Pause;
-		this.emit(GameEvent.afterPause);
+		this.emit(EGameEvent.afterPause);
 	};
 
 
@@ -225,7 +204,9 @@ export class Game extends EventEmitter {
 		this.status = EGameStatus.End;
 	};
 
-
+	protected isRealAction(actionName: string): boolean {
+		return this.realActionNameList.indexOf(actionName) >= 0;
+	}
 
 
 }

@@ -7,6 +7,7 @@ import {
 } from '../../struct/enums';
 import { Platform } from '../platform';
 import { Room } from '../room/room';
+import  RoomMgr from '../room/roomMgr';
 import * as SocketIO from 'socket.io';
 import * as Protocol from '../../struct/protocol';
 import loger from '../loger';
@@ -122,28 +123,26 @@ export class User {
                 let resData: Protocol.IResMatchGame;
                 let reason: string = '';
 
+                let gameName = EGameName[name];
                 let mgr = pl.matchMgr;
                 let info: IMatchInfo = {
                     id: this.userName,
-                    gameName: name,
+                    gameName,
                     data: extData,
                 };
 
-                let matchFlag = mgr.add(name, info);
+                let matchFlag = mgr.add(gameName, info);
                 flag = matchFlag == EMatch.success;
                 resData = { flag, code: matchFlag, };
                 so.emit('resMatchGame', resData);
-                loger.info(`resMatchGame::${this.userName}::${EGameName[name]}::${flag}::${EMatch[matchFlag]}`);
+                loger.info(`resMatchGame::${this.userName}::${name}::${flag}::${EMatch[matchFlag]}`);
 
             });
 
             // 游戏操作
             so.on('reqGameAction', (data: Protocol.IReqGameAction<any>) => {
                 let { roomId, actionName, actionData } = data;
-                console.log('***************************');
-                console.log(data);
-                let roomList = pl.roomMgr.roomList;
-                let ro = _.find(roomList, ro => ro.id == roomId);
+                let ro = this.platform.roomMgr.findByRoomId(roomId);
                 if (ro) {
                     let action: GameAction<any> = {
                         playerName: this.userName,
@@ -153,7 +152,6 @@ export class User {
                     ro.accpetAction(action);
                 }
                 else {
-                    loger.debug(`roomIdList::${roomList.map(ro => ro.id).join('\n')}`);
                     loger.error(`game::action::ERR ROOMID::${roomId}`);
                 }
             });

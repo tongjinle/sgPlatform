@@ -133,8 +133,9 @@ export interface IGameRule {
 
 // 匹配游戏
 export interface IReqMatchGame {
-    name: EGameName;
-    extData: any;
+    // 游戏名字
+    name: string,
+    extData: any,
 };
 
 export interface IResMatchGame {
@@ -147,7 +148,7 @@ export interface INotifyMatchingGame { }
 
 export interface INotifyMatchGame {
     roomId: string,
-    playerNameList: string[],
+    userNameList: string[],
 };
 
 // 游戏操作

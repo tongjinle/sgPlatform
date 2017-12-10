@@ -91,8 +91,8 @@ export class HonestGame extends Game {
     // 可以问答
     private canAsk: boolean;
 
-    constructor(initData: IHonestGameInitData) {
-        super(initData);
+    constructor() {
+        super();
 
         this.intimacy = 0;
         this.duration = 3 * 60 * 1000;

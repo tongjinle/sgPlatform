@@ -1,11 +1,14 @@
 import * as Http from 'http';
-import { EPlatformStatus } from '../struct/enums';
+import { EPlatformStatus, EGameName } from '../struct/enums';
+import * as Protocol from '../struct/protocol';
 import * as SocketIO from 'socket.io';
 import loger from './loger';
 import * as _ from 'underscore';
 
-
+import IMatchInfo from './match/iMatchInfo';
+import EMatchEvent from './match/eMatchEvent';
 import MatchMgr from './match/matchMgr';
+
 import UserMgr from './user/userMgr';
 import RoomMgr from './room/roomMgr';
 
@@ -20,10 +23,18 @@ export class Platform {
     userMgr: UserMgr;
     roomMgr: RoomMgr;
 
+    matchGameNameList: EGameName[];
+    private matchLoopTimer: NodeJS.Timer;
+    private matchLoopInterval: number;
+    private isMatching: boolean;
+
     private constructor() {
         this.userMgr = new UserMgr();
+
         this.roomMgr = new RoomMgr();
-        this.matchMgr = new MatchMgr(500);
+
+        this.matchMgr = new MatchMgr();
+        this.isMatching = false;
     }
 
     startServer() {
@@ -41,19 +52,60 @@ export class Platform {
         });
 
 
-        
 
-        this.matchMgr.startLoop();
         this.listen();
-
         this.status = EPlatformStatus.Open;
+    }
 
+    // 开始游戏玩家匹配
+    startMatchLoop(): void {
+        if (!this.isMatching) {
+            this.matchLoopTimer = setInterval(() => {
+                this.matchGameNameList.forEach(gameName => {
+                    let matchInfoList = this.matchMgr.match(gameName);
+                    if (matchInfoList) {
+                        this.matchMgr.remove(gameName, ...matchInfoList);
+
+                        let ro = this.matchMgr.afterMatch(gameName, matchInfoList);
+                        if (ro) {
+                            this.roomMgr.add(ro);
+
+                            let roomId = ro.id;
+                            let userNameList = ro.userList.map(us => us.userName);
+                            let notiData: Protocol.INotifyMatchGame = { roomId, userNameList, };
+                            ro.notifyAll('notiMatchGame', notiData);
+                            
+                            ro.start();
+                        }
+                    }
+                });
+            }, this.matchLoopInterval);
+
+            this.isMatching = true;
+        }
+    }
+
+    // 停止游戏玩家匹配
+    stopMatchLoop(): void {
+        if (this.isMatching) {
+            clearInterval(this.matchLoopTimer);
+            this.isMatching = false;
+        }
     }
 
     private listen(): void {
         let io = this.io;
         io.on('connect', so => {
             this.userMgr.add(so, this);
+        });
+
+        this.matchMgr.on(EMatchEvent.afterAddMatchInfo, (matchInfo: IMatchInfo) => {
+            // let us = this.userMgr.findByUserName(matchInfo.id);
+            // if(us){
+            //     us.socket.emit('resMatchingGame');
+            //     loger.debug(us.socket.id);
+            //     loger.debug(`resMatchingGame::${us.userName}`);
+            // }
         });
     }
 

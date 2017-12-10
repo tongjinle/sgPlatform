@@ -1,6 +1,6 @@
 import { EGameName } from '../../struct/enums';
 import { User } from '../user/user';
-import { IGameInitData, Game, GameAction } from '../game/game';
+import { IGameInitData, Game, GameAction, EGameEvent, } from '../game/game';
 import GameMap from '../game/gameMap';
 // import { createGame } from '../game/gameUtil';
 import { Player } from '../user/player';
@@ -13,7 +13,7 @@ import * as _ from 'underscore';
 
 export class Room {
     id: string;
-    playerList: User[];
+    userList: User[];
     maxPlayerCount: number;
     watcherList: User[];
     maxWatcherCount: number;
@@ -24,27 +24,25 @@ export class Room {
 
 
 
-    constructor(gameName: EGameName, playerList: User[], initData: IGameInitData) {
+    constructor(gameName: EGameName, userList: User[], initData: IGameInitData) {
         this.id = _.uniqueId();
         this.gameName = gameName;
-        this.playerList = playerList;
+        this.userList = userList;
         this.watcherList = [];
 
         // join room
-        this.playerList.forEach(us => {
+        this.userList.forEach(us => {
             us.socket.join(this.id);
         });
 
         // create game;
         let gameCls = GameMap[gameName];
-        let ga = this.game = new gameCls(initData);
+        let ga = this.game = new gameCls();
+        ga.playerList.push(...this.userList.map(us => new Player(us.userName)));
         ga.room = this;
-        // push player;
-        this.playerList.forEach(us => {
-            let plName = us.userName;
-            let pler = new Player(plName);
-            ga.playerList.push(pler);
-        });
+        ga.parseInitData(initData);
+        ga.emit(EGameEvent.afterParseInitData, initData);
+
     };
 
 
@@ -79,10 +77,10 @@ export class Room {
 
     // 反馈action的操作结果给发起action的player
     // 一般来说,就是反馈一个布尔值,表示是不是action被执行
-    resPlayer(playerName: string, event: string, ...data: any[]) {
-        this.playerList.some(pler => {
-            if (playerName == pler.userName) {
-                pler.socket.emit(event, ...data);
+    resPlayer(userName: string, event: string, ...data: any[]) {
+        this.userList.some(us => {
+            if (userName == us.userName) {
+                us.socket.emit(event, ...data);
                 return true;
             }
         });

@@ -1,4 +1,5 @@
 import { Game, GameAction, IGameInitData, } from '../../game';
+import RoundGame from '../../sub/roundGame';
 import { Player } from '../../../user/player';
 import * as _ from 'underscore';
 import loger from '../../../loger';
@@ -14,21 +15,22 @@ export interface ITestGameEnd {
     winner: string;
 };
 
-export class TestGame extends Game {
+export class TestGame extends RoundGame {
     private gestureMap: { playerName: string, gestureName: string }[];
     private winner: Player;
     private static gestureList = ['bu', 'jiandao', 'cuizi'];
 
-    constructor(initData: IGameInitData) {
-        super(initData);
+    constructor() {
+        super();
 
         this.gestureMap = [];
         this.winner = undefined;
+        this.realActionNameList.push(...['gesture']);
 
         // gesture
         this.checkActionHandlerList.push(
             (action: GameAction<ITestGameGestureAction>) => {
-                let pler = this.playerList[this.turnIndex];
+                let pler = this.currPlayer;
                 let { gestureName } = action.actionData;
 
                 let map = this.gestureMap;
@@ -43,7 +45,7 @@ export class TestGame extends Game {
         // gesture只能是石头剪刀布
         this.checkActionHandlerList.push(
             (action: GameAction<ITestGameGestureAction>) => {
-                let pler = this.playerList[this.turnIndex];
+                let pler = this.currPlayer;
                 let { gestureName } = action.actionData;
 
                 let map = this.gestureMap;
@@ -57,7 +59,7 @@ export class TestGame extends Game {
 
         this.parseActionHandlerList['gesture'] =
             (action: GameAction<ITestGameGestureAction>) => {
-                let pler = this.playerList[this.turnIndex];
+                let pler = this.currPlayer;
                 let { gestureName } = action.actionData;
 
                 let map = this.gestureMap;
@@ -73,34 +75,18 @@ export class TestGame extends Game {
                                 winner: this.winner.userName
                             }
                         };
+                        
+                        this.end();
+
                         ro.notifyAll('notiGameEnd', notiData);
                         ro.end();
-                        return;
                     }
                 }
 
-                // 如果游戏没有结束,就继续切换下一个行棋者
-                this.notifyTurn();
             };
     }
 
-    turn(): string {
-        // 清空所有player的isTurn
-        this.playerList.forEach(pler => { pler.isTurn = false; });
-        // 确定当前行动的人
-        if (this.turnIndex == -1) {
-            let se = this.seedGenerator;
-            this.turnIndex = parseInt(this.playerList.length * se() + '');
-        }
-        else {
-            this.turnIndex = (this.turnIndex + 1) % this.playerList.length;
-        }
 
-        loger.info(`turnIndex:${this.turnIndex}`);
-
-        this.playerList[this.turnIndex].isTurn = true;
-        return this.playerList[this.turnIndex].userName;
-    }
 
 
     private calResult(): void {
@@ -125,7 +111,7 @@ export class TestGame extends Game {
             let sub = arr[0].code - arr[1].code;
             winnerIndex = sub == 0 ? -1 : sub > 0 ? 0 : 1;
         }
-        console.log(winnerIndex);
-        this.winner = winnerIndex == 0 ? undefined : this.playerList[winnerIndex];
+        console.log({winnerIndex});
+        this.winner = winnerIndex == -1 ? undefined : this.playerList[winnerIndex];
     }
 }

@@ -1,7 +1,7 @@
 import IMatchInfo from './iMatchInfo';
-
+import { Room } from '../room/room';
 interface IAfterMatch {
-    (matched: IMatchInfo[]): void
+    (matched: IMatchInfo[]): Room,
 }
 
 export default IAfterMatch;
