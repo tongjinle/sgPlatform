@@ -81,7 +81,7 @@ class RoundGame extends Game {
             loger.info(`game::notifyGameTurn::${JSON.stringify(notiData)}`);
         }
         else {
-            loger.error(`game::notifyTurn::${this.playerList.map(pl => pl.userName + '==' + pl.isTurn).join('\n')}`);
+            loger.error(`game::notifyTurn::${this.playerList.map(pl => pl.userName + '==' + (this.currPlayer == pl)).join('\n')}`);
         }
     }
 }

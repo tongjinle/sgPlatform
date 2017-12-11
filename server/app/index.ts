@@ -23,7 +23,7 @@ pl.startServer();
 
 // 设置要match的游戏
 pl.matchGameNameList = [EGameName.TestGame];
-pl.startMatchLoop();
+pl.matchLoop.start();
 
 // 测试游戏
 function injectTestGame() {

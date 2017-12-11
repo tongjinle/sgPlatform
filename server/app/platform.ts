@@ -1,5 +1,5 @@
 import * as Http from 'http';
-import { EPlatformStatus, EGameName } from '../struct/enums';
+import { EPlatformStatus, EGameName, EUserStatus, } from '../struct/enums';
 import * as Protocol from '../struct/protocol';
 import * as SocketIO from 'socket.io';
 import loger from './loger';
@@ -13,6 +13,8 @@ import UserMgr from './user/userMgr';
 import RoomMgr from './room/roomMgr';
 
 import config from './config';
+
+import Loop from './loop';
 
 
 export class Platform {
@@ -28,13 +30,55 @@ export class Platform {
     private matchLoopInterval: number;
     private isMatching: boolean;
 
+    matchLoop: Loop;
+    clearDiscLoop: Loop;
+
     private constructor() {
         this.userMgr = new UserMgr();
 
         this.roomMgr = new RoomMgr();
 
         this.matchMgr = new MatchMgr();
-        this.isMatching = false;
+
+        // match loop
+        this.matchLoop = new Loop();
+        this.matchLoop.handler = () => {
+            this.matchGameNameList.forEach(gameName => {
+                let matchInfoList = this.matchMgr.match(gameName);
+                if (matchInfoList) {
+                    this.matchMgr.remove(gameName, ...matchInfoList);
+
+                    let ro = this.matchMgr.afterMatch(gameName, matchInfoList);
+                    if (ro) {
+                        this.roomMgr.add(ro);
+
+                        let roomId = ro.id;
+                        let userNameList = ro.userList.map(us => us.userName);
+                        let notiData: Protocol.INotifyMatchGame = { roomId, userNameList, };
+                        ro.notifyAll('notiMatchGame', notiData);
+
+                        ro.start();
+                    }
+                }
+            });
+        };
+        this.matchLoop.interval = config.platform.matchInterval;
+
+        // clear disconnect user loop
+        this.clearDiscLoop = new Loop();
+        this.clearDiscLoop.handler = () => {
+            let duration: number = config.platform.reconnectDuration;
+            let now = Date.now();
+            this.userMgr.userList.forEach(us => {
+                if (EUserStatus.Online == us.status) { return; }
+                if (now - us.offLineTs > duration) {
+                    this.userMgr.logout(us.userName);
+                }
+            });
+        };
+        this.clearDiscLoop.interval = config.platform.clearInterval;
+
+
     }
 
     startServer() {
@@ -57,41 +101,13 @@ export class Platform {
         this.status = EPlatformStatus.Open;
     }
 
-    // 开始游戏玩家匹配
-    startMatchLoop(): void {
-        if (!this.isMatching) {
-            this.matchLoopTimer = setInterval(() => {
-                this.matchGameNameList.forEach(gameName => {
-                    let matchInfoList = this.matchMgr.match(gameName);
-                    if (matchInfoList) {
-                        this.matchMgr.remove(gameName, ...matchInfoList);
+    // 开始清理断线玩家
+    startClearDisconnectUser() {
 
-                        let ro = this.matchMgr.afterMatch(gameName, matchInfoList);
-                        if (ro) {
-                            this.roomMgr.add(ro);
-
-                            let roomId = ro.id;
-                            let userNameList = ro.userList.map(us => us.userName);
-                            let notiData: Protocol.INotifyMatchGame = { roomId, userNameList, };
-                            ro.notifyAll('notiMatchGame', notiData);
-                            
-                            ro.start();
-                        }
-                    }
-                });
-            }, this.matchLoopInterval);
-
-            this.isMatching = true;
-        }
     }
 
-    // 停止游戏玩家匹配
-    stopMatchLoop(): void {
-        if (this.isMatching) {
-            clearInterval(this.matchLoopTimer);
-            this.isMatching = false;
-        }
-    }
+
+
 
     private listen(): void {
         let io = this.io;

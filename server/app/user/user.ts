@@ -161,6 +161,7 @@ export class User {
 
         }
     }
+    offLineTs:number;
 
     constructor(socket: SocketIO.Socket, platform: Platform) {
         this.socket = socket;
@@ -359,6 +360,7 @@ export class User {
                 io.emit('notiDisconnect', notiData);
 
                 this.status = EUserStatus.Offline;
+                this.offLineTs = Date.now();
 
                 loger.info(`disconnect : ${this.userName}`);
 
@@ -390,6 +392,8 @@ export class User {
 
 
     // 重连
-    reconnect(): void { }
+    reconnect(): void {
+
+    }
 }
 
