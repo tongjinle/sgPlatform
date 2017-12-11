@@ -7,7 +7,7 @@ import {
 } from '../../struct/enums';
 import { Platform } from '../platform';
 import { Room } from '../room/room';
-import  RoomMgr from '../room/roomMgr';
+import RoomMgr from '../room/roomMgr';
 import * as SocketIO from 'socket.io';
 import * as Protocol from '../../struct/protocol';
 import loger from '../loger';
@@ -18,6 +18,7 @@ import EMatch from '../match/eMatch';
 import IMatchInfo from '../match/iMatchInfo';
 
 import ELogin from './eLogin';
+import ELogout from './eLogout';
 
 export class User {
     userName: string;
@@ -172,14 +173,14 @@ export class User {
     }
 
 
-    async login(userName: string, password: string):Promise<void> {
+    async login(userName: string, password: string): Promise<void> {
         let so = this.socket;
         let pl = this.platform;
         let io = pl.io;
 
         // 数据库密码
         let Loginflag = await pl.userMgr.login(userName, password, so);
-        let flag = Loginflag == ELogin.success;
+        let flag = [ELogin.success, ELogin.reloginSuccess].indexOf(Loginflag) >= 0;
         let resData: Protocol.IResLoginData = { flag, code: Loginflag, };
         so.emit('resLogin', resData);
 
@@ -194,32 +195,35 @@ export class User {
             let notiData: Protocol.INotifyLoginData = { userName, };
             pl.broadcast('notiLogin', notiData);
 
+
             // 查看是否是重连
+            if (ELogin.reloginSuccess == Loginflag) {
+                this.reconnect();
+            }
             // if (pl.holdList.some(ho => ho.userName == userName)) {
             //     pl.holdList = pl.holdList.filter(ho => ho.userName != userName);
-            //     loger.info(`reconnect::${userName}`);
             //     this.reconnect();
             // }
+
         }
 
-        loger.info(`login::${userName}::${ELogin[Loginflag]}`);
+        loger.info(`user::login::${userName}::${ELogin[Loginflag]}::${this.socket.id}`);
     }
 
 
-    logout(): void {
+    async logout(): Promise<void> {
         let so = this.socket;
         let pl = this.platform;
         let io = pl.io;
 
         let flag: boolean;
         if (EUserStatus.Online == this.status) {
-            this.leaveAllRooms();
             this.status = EUserStatus.Offline;
 
-            let userList = pl.userMgr.userList;
-            userList = _.without(userList, this);
+            let logoutFlag = await pl.userMgr.logout(this.userName);
+            this.leaveAllRooms();
 
-            flag = true;
+            flag = logoutFlag == ELogout.success;
             let resData: Protocol.IResLogoutData = { flag };
             so.emit('resLogout', resData);
             if (flag) {
@@ -227,7 +231,7 @@ export class User {
                 pl.broadcast('notiLogout', notiData);
                 so.disconnect();
             }
-            loger.info(`logout::${this.userName}::${flag}`);
+            loger.info(`user::logout::${this.userName}::${this.socket.id}::${flag}`);
         }
     }
 
@@ -319,11 +323,13 @@ export class User {
 
     // 离开房间
     leaveRoom(roomId: string): void {
+        this.roomList = this.roomList.filter(ro => ro.id != roomId);
         this.socket.leave(roomId);
     }
 
     // 离开所有房间
     leaveAllRooms(): void {
+        this.roomList = [];
         this.socket.leaveAll();
     };
 
@@ -361,8 +367,6 @@ export class User {
                 // pl.holdList.push({ userName: this.userName, ts: Date.now() });
 
 
-                // 清理
-                pl.userMgr.remove(so.id);
             }
         });
 

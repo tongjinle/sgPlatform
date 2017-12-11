@@ -2,6 +2,7 @@ import * as SocketIO from 'socket.io';
 import loger from '../loger';
 import { User } from './user';
 import ELogin from './eLogin';
+import ELogout from './eLogout';
 import { Platform } from '../platform';
 import * as _ from 'underscore';
 
@@ -25,21 +26,15 @@ export default class UserMgr {
         return _.find(this.userList, us => us.socket.id == socketId);
     }
 
-    findByUserName(userName:string):User{
+    findByUserName(userName: string): User {
         return _.find(this.userList, us => us.userName == userName);
     }
 
 
 
-    // 通过socketiId删除user
-    remove(socketId: string): boolean {
-        let user = this.findBySocketId(socketId);
-        if (user) {
-            this.userList = this.userList.filter(us => us != user);
-            loger.info(`disconnect::${socketId}`);
-            return true;
-        }
-        return false;
+    // 删除user
+    remove(...args: User[]): void {
+        this.userList = this.userList.filter(us => args.every(ar => ar != us));
     }
 
 
@@ -48,10 +43,36 @@ export default class UserMgr {
         if (socket) {
             let us = this.findBySocketId(socket.id);
             if (us) {
+                // disconnectUser
+                let discUs = this.findByUserName(userName);
+                if(discUs){
+                    this.remove(discUs);
+                    return ELogin.reloginSuccess;
+                }
                 return ELogin.success;
             }
         }
         return ELogin.fail;
     }
 
+    // 登出
+    async logout(userName: string): Promise<ELogout> {
+        let us = this.findByUserName(userName);
+        if(!us){return ELogout.fail;}
+
+        this.remove(us);
+        return ELogout.success;
+    }
+
 }
+
+
+
+
+
+
+
+
+
+
+

@@ -32,6 +32,7 @@ export class Room {
 
         // join room
         this.userList.forEach(us => {
+            loger.info(`room::joinRoom::${us.userName}::${us.socket.id}::${this.id}`);
             us.socket.join(this.id);
         });
 
@@ -50,6 +51,7 @@ export class Room {
     start(): void {
         let ga = this.game;
         if (ga) {
+            loger.info(`room::start::${this.id}::${EGameName[this.gameName]}`)
             ga.start();
         }
     }
@@ -92,6 +94,7 @@ export class Room {
         let pl = Platform.getInstance();
         let io = pl.io;
         io.to(this.id).emit(event, ...args);
+        loger.info(`room::notifyAll::${event}:${args ? JSON.stringify(args) : ''}`);
     }
 
 

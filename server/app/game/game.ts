@@ -5,7 +5,7 @@ import { Player } from '../user/player';
 import { Room } from '../room/room';
 import loger from '../loger';
 import * as Protocol from '../../struct/protocol';
-import Plug from './plug/plug';
+// import Plug from './plug/plug';
 import { EventEmitter } from 'events';
 
 export interface IGameResult {
@@ -74,7 +74,7 @@ export class Game extends EventEmitter {
 	// 是否是复盘状态
 	isReplay: boolean;
 	// 插件数据
-	plugList: Plug[];
+	// plugList: Plug[];
 
 	// 随机种子发生器
 	protected seedGenerator: SRnd.prng;
@@ -99,7 +99,7 @@ export class Game extends EventEmitter {
 		this.realActionNameList = [];
 		this.realActionList = [];
 
-		this.plugList = [];
+		// this.plugList = [];
 
 		this.status = EGameStatus.Prepare;
 
@@ -127,14 +127,14 @@ export class Game extends EventEmitter {
 
 	}
 
-	addPlug(plug: Plug): void {
-		// 同一个plug不应该加载两次
-		if (this.plugList.some(pl => pl.name == plug.name)) { return; }
+	// addPlug(plug: Plug): void {
+	// 	// 同一个plug不应该加载两次
+	// 	if (this.plugList.some(pl => pl.name == plug.name)) { return; }
 
-		this.plugList.push(plug);
-		plug.attachGame(this);
+	// 	this.plugList.push(plug);
+	// 	plug.attachGame(this);
 
-	}
+	// }
 
 	// 开始游戏
 	start(): void {

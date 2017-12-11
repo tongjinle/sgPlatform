@@ -348,7 +348,7 @@ testList.push((cb) => {
 createWatcher();
 setTimeout(() => {
 	let list = testList;
-	list = [testList[testList.length - 1]];
+	// list = [testList[testList.length - 1]];
 	async.eachSeries(list, (te, cb) => te(cb), () => {
 		console.log('test complete');
 	});
