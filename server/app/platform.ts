@@ -11,6 +11,7 @@ import MatchMgr from './match/matchMgr';
 
 import UserMgr from './user/userMgr';
 import RoomMgr from './room/roomMgr';
+import HolderMgr from './holder/holderMgr';
 
 import config from './config';
 
@@ -24,6 +25,7 @@ export class Platform {
     matchMgr: MatchMgr;
     userMgr: UserMgr;
     roomMgr: RoomMgr;
+    holderMgr: HolderMgr;
 
     matchGameNameList: EGameName[];
     private matchLoopTimer: NodeJS.Timer;
@@ -38,7 +40,11 @@ export class Platform {
 
         this.roomMgr = new RoomMgr();
 
+        let holdDuration = config.platform.holdDuration;
+        this.holderMgr = new HolderMgr(holdDuration);
+
         this.matchMgr = new MatchMgr();
+
 
         // match loop
         this.matchLoop = new Loop();
@@ -53,7 +59,7 @@ export class Platform {
                         this.roomMgr.add(ro);
 
                         let roomId = ro.id;
-                        let userNameList = ro.userList.map(us => us.userName);
+                        let userNameList = matchInfoList.map(ma => ma.id);
                         let notiData: Protocol.INotifyMatchGame = { roomId, userNameList, };
                         ro.notifyAll('notiMatchGame', notiData);
 
@@ -62,19 +68,13 @@ export class Platform {
                 }
             });
         };
+        
         this.matchLoop.interval = config.platform.matchInterval;
 
         // clear disconnect user loop
         this.clearDiscLoop = new Loop();
         this.clearDiscLoop.handler = () => {
-            let duration: number = config.platform.reconnectDuration;
-            let now = Date.now();
-            this.userMgr.userList.forEach(us => {
-                if (EUserStatus.Online == us.status) { return; }
-                if (now - us.offLineTs > duration) {
-                    this.userMgr.logout(us.userName);
-                }
-            });
+            this.holderMgr.clear();
         };
         this.clearDiscLoop.interval = config.platform.clearInterval;
 

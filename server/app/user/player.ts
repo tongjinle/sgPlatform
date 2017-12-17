@@ -1,8 +1,10 @@
 import { EGameStatus } from '../../struct/enums';
+import EGamePlayerStatus from './eGamePlayerStatus';
 import { Game } from '../game/game';
 
 export class Player {
 	userName: string;
+	status:EGamePlayerStatus;
 	// gameStatus: EGameStatus;
 	// // 上一次动作时间,包括所有动作
 	// lastActionTs: number;

@@ -1,6 +1,5 @@
 enum ELogin{
     success,
-    reloginSuccess,
     fail
 }
 

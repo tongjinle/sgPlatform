@@ -5,8 +5,10 @@ import ELogin from './eLogin';
 import ELogout from './eLogout';
 import { Platform } from '../platform';
 import * as _ from 'underscore';
+import config from '../config';
 
 export default class UserMgr {
+    // 用户列表
     userList: User[];
     constructor() {
         this.userList = [];
@@ -16,7 +18,7 @@ export default class UserMgr {
     add(socket: SocketIO.Socket, platform: Platform): void {
         let us = new User(socket, platform);
         this.userList.push(us);
-        loger.info(`connect::${socket.id}`);
+        loger.info(`userMgr::add::${socket.id}`);
 
     }
 
@@ -33,8 +35,8 @@ export default class UserMgr {
 
 
     // 删除user
-    remove(...args: User[]): void {
-        this.userList = this.userList.filter(us => args.every(ar => ar != us));
+    remove(...userList: User[]): void {
+        this.userList = this.userList.filter(us => userList.every(usRemove => usRemove != us));
     }
 
 
@@ -43,12 +45,6 @@ export default class UserMgr {
         if (socket) {
             let us = this.findBySocketId(socket.id);
             if (us) {
-                // disconnectUser
-                let discUs = this.findByUserName(userName);
-                if(discUs){
-                    this.remove(discUs);
-                    return ELogin.reloginSuccess;
-                }
                 return ELogin.success;
             }
         }
@@ -58,9 +54,12 @@ export default class UserMgr {
     // 登出
     async logout(userName: string): Promise<ELogout> {
         let us = this.findByUserName(userName);
+        console.log('logout find us',userName,us.userName);
         if(!us){return ELogout.fail;}
 
+        console.log('before logout',this.userList.map(us=>us.userName));
         this.remove(us);
+        console.log('after logout',this.userList.map(us=>us.userName));
         return ELogout.success;
     }
 

@@ -2,11 +2,14 @@ import * as _ from 'underscore';
 import * as SRnd from 'seedrandom';
 import { EGameStatus, EGameName } from '../../struct/enums';
 import { Player } from '../user/player';
-import { Room } from '../room/room';
+import { Room, IRoomJoin, IRoomLeave, } from '../room/room';
+import ERoomEvent from '../room/eRoomEvent';
 import loger from '../loger';
 import * as Protocol from '../../struct/protocol';
 // import Plug from './plug/plug';
 import { EventEmitter } from 'events';
+import eRoomEvent from '../room/eRoomEvent';
+
 
 export interface IGameResult {
 	winer: string;
@@ -41,6 +44,8 @@ export enum EGameEvent {
 	beforePause = 'beforePause',
 	afterPause = 'afterPause',
 
+	end = 'end',
+
 }
 
 
@@ -53,8 +58,6 @@ export class Game extends EventEmitter {
 	seed: number;
 	// 游戏所属的房间
 	room: Room;
-	// 游戏状态
-	status: EGameStatus;
 	// 开始时间戳
 	startTimestamp: number;
 	// 结束时间戳
@@ -83,6 +86,14 @@ export class Game extends EventEmitter {
 	// 处理操作列表
 	protected parseActionHandlerList: { [actionName: string]: (action: GameAction<any>) => void };
 
+	// 游戏状态
+	private _status: EGameStatus;
+	public get status(): EGameStatus {
+		return this._status;
+	}
+	public set status(v: EGameStatus) {
+		this._status = v;
+	}
 
 
 	constructor() {
@@ -107,9 +118,31 @@ export class Game extends EventEmitter {
 		this.initCheckActionHandlerList();
 	};
 
+	/**
+	 * 当有用户进入房间
+	 * 需要子类覆写
+	 * @param userName 进入房间的用户名
+	 */
+	public onUserJoin(userName:string):void{
+		
+	};
+	
+	/**
+	 * 当有用户离开房间
+	 * 需要子类覆写
+	 * @param data 离开房间的用户名
+	 */
+	public onUserLeave(userName:string){
 
+	};
 
+	
 
+	/**
+	 * 预游戏操作列表的初始化
+	 * 预游戏操作是判断接受的游戏操作是否合法,如果不合法,则游戏操作会被拒绝
+	 * 
+	 */
 	protected initCheckActionHandlerList(): void {
 		let list = this.checkActionHandlerList;
 
@@ -122,7 +155,7 @@ export class Game extends EventEmitter {
 			return flag;
 		});
 
-
+		
 
 
 	}
@@ -138,32 +171,38 @@ export class Game extends EventEmitter {
 
 	// 开始游戏
 	start(): void {
+		// game发送"游戏开始前"事件
 		this.emit(EGameEvent.beforeStart);
 
 		this.status = EGameStatus.Play;
+
+		// 向客户端发送"游戏开始"的信息
 		let ro = this.room;
 		let notiData: Protocol.INotifyGameStart = {
 			roomId: ro.id,
 			gameName: ro.gameName,
 			playerNameList: this.playerList.map(pler => pler.userName),
 		};
-
 		ro.notifyAll('notiGameStart', notiData);
-		loger.info(`game::start::${ro.id}::${EGameName[ro.gameName]}`);
 
+		// game发送"游戏开始后"事件
 		this.emit(EGameEvent.afterStart);
 
+		loger.info(`game::start::${ro.id}::${EGameName[ro.gameName]}`);
 	};
 
 
 
-	// 解析游戏需要的extData
+	/**
+	 * 解析游戏需要的extData
+	 * 需要子类覆写
+	 * @param initData 
+	 */
 	parseInitData(initData: IGameInitData) {
-		this.emit(EGameEvent.afterParseInitData, initData);
 	}
 
 
-	// 检验玩家发出的游戏操作
+	// 检验玩家发出的游戏操作·
 	checkAction(action: GameAction<any>): boolean {
 		let ret: boolean;
 		let list = this.checkActionHandlerList;
@@ -202,11 +241,17 @@ export class Game extends EventEmitter {
 	// 结束游戏
 	end(): void {
 		this.status = EGameStatus.End;
+		this.emit(EGameEvent.end);
 	};
 
+	/**
+	 * 判断是不是"真实"的游戏动作
+	 * @param actionName 游戏动作名称
+	 */
 	protected isRealAction(actionName: string): boolean {
 		return this.realActionNameList.indexOf(actionName) >= 0;
 	}
+
 
 
 }
