@@ -358,6 +358,12 @@ export class User {
         this.socket.leave('platform');
         // 离开所有房间
         this.leaveAllRooms();
+        // 退出匹配
+        let pl = this.platform;
+        let matchList = pl.matchMgr.findById(this.userName);
+        matchList.forEach(ma => {
+            pl.matchMgr.remove(ma.gameName, ma);
+        });
     }
 
     /**
@@ -428,28 +434,32 @@ export class User {
         // disconnect而且能在内存中找到socket的，才叫断线
         so.on('disconnect', () => {
             let userList = pl.userMgr.userList;
-            if (this.status == EUserStatus.Online && userList.some(us => us.socket == so)) {
-                let notiData: Protocol.INotifyDisconnect = { userName: this.userName };
-                io.emit('notiDisconnect', notiData);
+            if (this.status != EUserStatus.Online) { return; }
 
-                this.status = EUserStatus.Offline;
-
-                // 加入等待重连的列表
-                {
-                    let mgr = pl.holderMgr;
-                    let userName = this.userName;
-                    let roomIdList = this.roomList.map(ro => ro.id);
-                    mgr.add(userName, roomIdList);
-                }
-
-                // 登出
-                {
-                    let mgr = pl.userMgr;
-                    mgr.remove(this);
-                }
-
-                loger.info(`disconnect : ${this.userName}`);
+            // 加入等待重连的列表
+            {
+                let mgr = pl.holderMgr;
+                let userName = this.userName;
+                let roomIdList = this.roomList.map(ro => ro.id);
+                mgr.add(userName, roomIdList);
             }
+
+            // 登出
+            {
+                // 离开平台
+                this.leavePlatform();
+                // 删除用户
+                let mgr = pl.userMgr;
+                mgr.remove(this);
+            }
+
+            // 发送“断线”信息给客户端
+            let notiData: Protocol.INotifyDisconnect = { userName: this.userName };
+            io.emit('notiDisconnect', notiData);
+
+
+            loger.info(`disconnect : ${this.userName}`);
+
         });
     }
 

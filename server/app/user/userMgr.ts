@@ -54,7 +54,7 @@ export default class UserMgr {
     // 登出
     async logout(userName: string): Promise<ELogout> {
         let us = this.findByUserName(userName);
-        console.log('logout find us',userName,us.userName);
+        console.log('logout find user',userName,us.userName);
         if(!us){return ELogout.fail;}
 
         console.log('before logout',this.userList.map(us=>us.userName));

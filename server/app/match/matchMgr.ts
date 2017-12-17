@@ -45,7 +45,15 @@ export default class MatchMgr extends EventEmitter {
         this.dict[gameName] = this.dict[gameName].filter(info => !args.some(n => n.id == info.id));
     }
 
-
+    // 返回用户的所有的匹配
+    findById(id: string): IMatchInfo[] {
+        let ret: IMatchInfo[] = [];
+        for (let gameName in this.dict) {
+            let list = this.dict[gameName];
+            ret.push(...list.filter(li => li.id == id));
+        }
+        return ret;
+    }
 
     // 增加一个匹配算法
     addMatch(gameName: EGameName, match: IMatch) {

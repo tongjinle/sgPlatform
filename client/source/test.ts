@@ -1,6 +1,7 @@
 import * as io from "socket.io-client";
 import * as _ from 'underscore';
 import * as async from 'async';
+import delay from './delay';
 
 console.log(new Date().toTimeString());
 
@@ -345,10 +346,50 @@ testList.push((cb) => {
 	], clear.bind(null, cb));
 });
 
+// 测试游戏断线重连
+// a,b登录
+// a,b先后匹配游戏
+// 匹配成功
+// a发出一个action,请求出“锤子”
+// 系统通知b的turn
+// b断线
+// a听到b的断线
+// b重新连接
+// a听到b的重新连接
+// b发出一个action,请求出"布"
+// 系统进行判断,发出b胜利的信息,通知a和b
+testList.push(async (cb) => {
+	await delay();
+
+	let userNameList = ['a', 'b'];
+	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
+	userNameList.forEach(usName => {
+		let so = createSocket();
+		soList[usName] = so;
+		infoList[usName] = [];
+		so.on('notiMatchGame', data => {
+			infoList[usName].push({ event: 'notiMatchGame', data });
+		});
+		login(so, usName);
+	});
+	await delay();
+	userNameList.forEach(usName => {
+		soList[usName].emit('reqMatchGame', { name: 'TestGame' });
+	});
+	await delay(4000);
+	{
+		let aHearNotiMatchGame = infoList['a'].some(info => info.event == 'notiMatchGame');
+		console.assert(aHearNotiMatchGame, 'a hear notiGameMatch');
+		let bHearNotiMatchGame = infoList['b'].some(info => info.event == 'notiMatchGame');
+		console.assert(bHearNotiMatchGame, 'b hear notiGameMatch');
+	}
+	clear(cb);
+});
+
 createWatcher();
 setTimeout(() => {
 	let list = testList;
-	// list = [testList[testList.length - 1]];
+	list = [testList[testList.length - 1]];
 	async.eachSeries(list, (te, cb) => te(cb), () => {
 		console.log('test complete');
 	});
