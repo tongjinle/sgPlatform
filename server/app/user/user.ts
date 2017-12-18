@@ -166,7 +166,7 @@ export class User {
                     ro.accpetAction(action);
                 }
                 else {
-                    loger.error(`game::action::ERR ROOMID::${roomId}`);
+                    loger.error(`user::gameAction::ERR ROOMID::${roomId}`);
                 }
             });
 
@@ -377,7 +377,7 @@ export class User {
         // 不在当前用户的房间列表中
         // 房间的用户列表中不存在当前用户
         if (roAdd) {
-            let flag = !!roAdd.findUser(this.userName);
+            let flag = !roAdd.findUser(this.userName);
 
             if (flag) {
                 roAdd.join(this);
@@ -396,7 +396,7 @@ export class User {
         // 当前用户存在在房间的用户列表中
         let roRemove = this.platform.roomMgr.findByRoomId(roomId);
         if (roRemove) {
-            let flag = roRemove.findUser(this.userName);
+            let flag = !!roRemove.findUser(this.userName);
             if (flag) {
                 roRemove.leave(this);
             }
@@ -434,7 +434,11 @@ export class User {
         // disconnect而且能在内存中找到socket的，才叫断线
         so.on('disconnect', () => {
             let userList = pl.userMgr.userList;
-            if (this.status != EUserStatus.Online) { return; }
+            if (this.status != EUserStatus.Online) {
+                let mgr = pl.userMgr;
+                mgr.remove(this);
+                return;
+            }
 
             // 加入等待重连的列表
             {
@@ -474,11 +478,16 @@ export class User {
         // 断线用户尚未超出重连时间
         // 进入所有房间
         let ho = mgr.find(this.userName);
+        loger.debug(JSON.stringify(ho));
         if (ho && !mgr.isOvertime(ho)) {
+            mgr.remove(this.userName);
             ho.roomIdList.forEach(roId => {
                 this.joinRoom(roId);
             });
+            loger.info(`user::reconnect::${this.userName}::${this.socket.id}`);
         }
+
+
 
     }
 }

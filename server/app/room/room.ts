@@ -42,14 +42,14 @@ export class Room extends EventEmitter {
 
         this.id = _.uniqueId();
         this.gameName = gameName;
-        this.userList = userList;
         this.watcherList = [];
 
         // listen
         this.listen();
 
         // join room
-        this.userList.forEach(us => {
+        this.userList = [];
+        userList.forEach(us => {
             this.join(us);
         });
 

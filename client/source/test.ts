@@ -357,25 +357,47 @@ testList.push((cb) => {
 // b重新连接
 // a听到b的重新连接
 // b发出一个action,请求出"布"
+// a听到b的游戏动作
 // 系统进行判断,发出b胜利的信息,通知a和b
 testList.push(async (cb) => {
 	await delay();
-
+	let roomId: string;
 	let userNameList = ['a', 'b'];
 	let infoList: { [userName: string]: { event: string, data: any }[] } = {};
 	userNameList.forEach(usName => {
 		let so = createSocket();
 		soList[usName] = so;
 		infoList[usName] = [];
+
 		so.on('notiMatchGame', data => {
+			roomId = data.roomId;
 			infoList[usName].push({ event: 'notiMatchGame', data });
 		});
+
+		so.on('notiLogin', data => {
+			infoList[usName].push({ event: 'notiLogin', data });
+		});
+
+		so.on('notiDisconnect', data => {
+			infoList[usName].push({ event: 'notiDisconnect', data });
+		});
+
+		so.on('notiGameAction', data => {
+			infoList[usName].push({ event: 'notiGameAction', data });
+		});
+
+		so.on('notiGameUpdate', data => {
+			infoList[usName].push({ event: 'notiGameUpdate', data });
+		});
+
 		login(so, usName);
 	});
+
 	await delay();
 	userNameList.forEach(usName => {
 		soList[usName].emit('reqMatchGame', { name: 'TestGame' });
 	});
+
 	await delay(4000);
 	{
 		let aHearNotiMatchGame = infoList['a'].some(info => info.event == 'notiMatchGame');
@@ -383,6 +405,76 @@ testList.push(async (cb) => {
 		let bHearNotiMatchGame = infoList['b'].some(info => info.event == 'notiMatchGame');
 		console.assert(bHearNotiMatchGame, 'b hear notiGameMatch');
 	}
+
+	await delay();
+	soList['a'].emit('reqGameAction', {
+		roomId,
+		actionName: 'gesture',
+		actionData: { gestureName: 'cuizi' },
+	});
+
+	await delay(500);
+	soList['b'].disconnect();
+
+
+
+	await delay(500);
+	{
+		let aHearDisconnectFromB = infoList['a'].some(info => {
+			return info.event == 'notiDisconnect' && info.data.userName == 'b';
+		});
+		console.assert(aHearDisconnectFromB, 'a hear disconnect from b');
+	}
+
+	await delay(500);
+	{
+		// 清除以前的login信息
+		infoList['a'] = [];
+		// infoList['a'] = infoList['a'].filter(info => info.event != 'notiLogin');
+
+		let so = createSocket();
+		soList['b'] = so;
+		login(so, 'b');
+
+		// 再次绑定监听
+		so.on('resGameAction', data => {
+			infoList['b'].push({ event: 'resGameAction', data });
+		})
+		so.on('notiGameUpdate', data => {
+			infoList['b'].push({ event: 'notiGameUpdate', data });
+		});
+	}
+
+	await delay(500);
+	{
+
+		let aHearReconnectFromB = infoList['a'].filter(info => info.event == 'notiLogin');
+		console.assert(aHearReconnectFromB, 'a hear reconnect from b');
+	}
+
+	await delay(500);
+	soList['b'].emit('reqGameAction', {
+		roomId,
+		actionName: 'gesture',
+		actionData: { gestureName: 'bu' },
+	});
+
+	await delay(500);
+	{
+		let bHearGameActionFromB = infoList['b'].some(info => {
+			return info.event == 'resGameAction';
+		});
+
+		let aHearGameUpdate = infoList['a'].some(info => {
+			return info.event == 'notiGameUpdate';
+		});
+
+		console.assert(bHearGameActionFromB && aHearGameUpdate, 'b hear gameAction from b && a hear gameUpdate');
+	}
+
+	console.log(JSON.stringify(infoList, null, 4));
+
+	await delay(2000);
 	clear(cb);
 });
 
